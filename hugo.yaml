@@ -133,11 +133,11 @@ params:
   # Hero
   hero:
     enable: true
-    intro: "Hi, my name is Jason Griller"
-    title: "Isabella."
-    subtitle: "I build things for the web"
-    content: "A passionate web app developer. I tend to make use of modern web technologies to build websites that look great, feel fantastic, and function correctly."
-    image: /images/hero.svg
+    intro: "Hi, my name is"
+    title: "Jason Griller."
+    subtitle: "I like building and figuring out how to make cool tech work for me"
+    content: "I'm a software developer building tools at the intersection of AI, productivity, and personal growth. Right now, I'm working on LikeMinds, an AI-powered goal and meetup app, while running a self-hosted homelab built from repurposed laptops."
+    image: /images/profile_pic.jpeg
     bottomImage:
       enable: true
     # roundImage: true # Make hero image circular | default false
