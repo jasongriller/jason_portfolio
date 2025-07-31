@@ -135,7 +135,7 @@ params:
     enable: true
     intro: "Hi, my name is"
     title: "Jason Griller."
-    subtitle: "I like building and figuring out how to make cool tech work for me"
+    subtitle: "I like figuring out how to make cool tech work for me"
     content: "I'm a software developer building tools at the intersection of AI, productivity, and personal growth. Right now, I'm working on LikeMinds, an AI-powered goal and meetup app, while running a self-hosted homelab built from repurposed laptops."
     image: /images/profile_pic.jpeg
     bottomImage:
@@ -150,9 +150,9 @@ params:
     socialLinks:
       fontAwesomeIcons:
         - icon: fab fa-github
-          url: https://example.com
+          url: https://github.com/jasongriller
         - icon: fab fa-x-twitter
-          url: https://example.com
+          url: https://www.linkedin.com/in/jasongriller/
       customIcons:
         - icon: /fav.png
           url: "https://example.com"
@@ -182,10 +182,10 @@ params:
     enable: true
     # title: "Custom Name"
     items:
-      - job: "Senior Software Developer"
-        company: "Facebook"
-        companyUrl: "https://example.com"
-        date: "Jan 2022 - present"
+      - job: "Data Analyst Intern"
+        company: "James Moore & Co."
+        companyUrl: "https://www.jmco.com"
+        date: "Mar 2023 - Sep 2023"
         featuredLink:
           enable: true
           name: "View the project"
@@ -248,35 +248,24 @@ params:
     # title: "Custom Name"
     index: false
     items:
-      - title: "Master of Business Administration"
-        school:
-          name: "University of California, Berkeley"
-          url: "https://example.org"
-        date: "2013 - 2015"
-        GPA: "3.8 out of 5.0"
-        content: |-
-          Extracurricular Activities
-            - Lorem ipsum dolor sit amet consectetur adipisicing elit.
-            - Tempora esse, eaque delectus nulla quo doloribus itaque expedita alias natus optio totam maxime nihil excepturi velit a animi laborum hic similique.
       - title: "Bachelor of Science in Computer Science"
         school:
-          name: "Massachusetts Institute of Technology"
+          name: "University of Central Florida"
           url: "https://example.org"
-        date: "2009 - 2013"
-        GPA: "3.9 out of 5.0"
+        date: "2022 - 2024"
+        GPA: "3.15 out of 4.0"
         content: |-
-          I Publiced two papers in the ACM SIGCHI Conference on Artificial Intelligence.
-          - [Fast and Accurate Object Detection with a Single Convolutional Neural Network](https://example.com)
-          - Face mask detection using a single convolutional neural network.
+          Gained a solid foundation in computer science, focusing on object-oriented programming, algorithms, and advanced data structures using C, C++, and Java. Applied these skills to real-world problems through coursework and involvement in UCF Knight Hacks and the Google Developer Student Club.
 
           Extracurricular Activities
-            - Lorem ipsum dolor sit amet consectetur adipisicing elit.
-            - Tempora esse, eaque delectus nulla quo doloribus itaque expedita alias natus optio totam maxime nihil excepturi velit a animi laborum hic similique.
+            - UCF Knight Hacks
+            - UCF Google Developer Student Club
         featuredLink:
           enable: true
           name: "My academic record"
           url: "https://example.com"
-      - title: "High School"
+
+      - title: "Associate of Arts in "
         school:
           name: "Thomas Jefferson High School for Science and Technology."
           url: "https://example.org"
@@ -363,7 +352,7 @@ params:
     # title: "Custom Name"
     content: My inbox is always open. Whether you have a question or just want to say hi, I’ll try my best to get back to you!
     btnName: Mail me
-    btnLink: mailto:gurusabarisha@gmail.com
+    btnLink: mailto:jgriller1@gmail.com
     # formspree:
     #   enable: true # `contact.email` value will be ignored
     #   formId: abcdefgh # Take it from your form's endpoint, like 'https://formspree.io/f/abcdefgh'
