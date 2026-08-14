@@ -1,0 +1,900 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#0b0e0d">
+<title>Jason Griller — Software Engineer</title>
+<meta name="description" content="Jason Griller — software developer in Orlando, Florida. Building LikeMinds, an AI-powered goal and meetup app, and running a self-hosted homelab.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap">
+<style>
+/* ===========================================================================
+   Embedded glyph subset.
+
+   JetBrains Mono ships no braille (U+2800-28FF), no block elements
+   (U+2580-259F) and no check mark, and Google Fonts serves none of them.
+   Left alone, the browser substitutes a per-glyph fallback at a different
+   advance width -- DejaVu Sans is +22%, Noto Sans Mono CJK is +100% -- which
+   shears the ASCII art apart and makes the spinner grid a different size on
+   every OS.
+
+   This subset is Adwaita Mono (SIL OFL 1.1, https://gitlab.gnome.org/GNOME/
+   adwaita-fonts), cut to just the ranges below by tools/make-font-subset.sh.
+   Its advance is 600/1000em, identical to JetBrains Mono, so no size-adjust
+   is needed. It is declared under its own family name rather than as
+   'JetBrains Mono' so the OFL Reserved Font Name clause is not engaged.
+   =========================================================================== */
+@font-face{
+  font-family:'Terminal Glyphs';
+  font-style:normal;
+  font-weight:400;
+  font-display:block;
+  src:url(data:font/woff2;base64,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) format('woff2');
+  unicode-range:U+0020,U+2192,U+2500-259F,U+25B2,U+2713,U+2800-28FF;
+}
+
+:root{
+  color-scheme:dark;
+
+  /* colour — contrast vs --bg noted, measured not guessed */
+  --bg:#0b0e0d;
+  --surface:#121716;
+  --rule:#1b2220;
+  --fg:#b8c4bf;        /* 10.79:1  AAA  body text                        */
+  --fg-dim:#7c8884;    /*  5.28:1  AA   secondary CONTENT (dates, tags)   */
+  --fg-faint:#6e7a76;  /*  4.35:1  DECORATIVE ONLY — see invariant below  */
+  --accent:#8fbf9f;    /*  9.35:1  AAA  $ sigil, ✓, links, focus ring     */
+
+  /* INVARIANT: --fg-faint may only appear on elements that also carry
+     aria-hidden="true". It is below AA for text, and is used exclusively
+     for ornament (spinners, corner brackets, rules). Greppable on purpose. */
+
+  --font:'JetBrains Mono','Terminal Glyphs',ui-monospace,SFMono-Regular,Menlo,Consolas,'Liberation Mono',monospace;
+  /* Art blocks put the subset FIRST and exclude JetBrains Mono, so every
+     glyph in a block -- including the spaces inside the name art -- comes
+     from one family and cannot shear. */
+  --font-art:'Terminal Glyphs',ui-monospace,'DejaVu Sans Mono',Menlo,Consolas,monospace;
+
+  --fs-0:.75rem; --fs-1:.875rem; --fs-2:.9375rem; --fs-3:1.125rem;
+  --lh:1.65; --lh-tight:1.3;
+
+  --s-1:.25rem; --s-2:.5rem;  --s-3:.75rem; --s-4:1rem;
+  --s-6:1.5rem; --s-8:2rem;   --s-12:3rem;  --s-16:4rem;
+
+  --page:56rem;
+  --hero-w:75rem;
+  --measure:72ch;
+  --gutter:clamp(1rem,4vw,2.5rem);
+}
+
+/* ---------- reset ---------- */
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0}
+
+/* ---------- base ---------- */
+html{
+  /* clip, not hidden: does not create a scroll container, so sticky still works */
+  overflow-x:clip;
+  -webkit-text-size-adjust:100%;
+}
+body{
+  background:var(--bg);
+  color:var(--fg);
+  font-family:var(--font);
+  font-size:var(--fs-2);
+  line-height:var(--lh);
+  font-variant-ligatures:none;
+  font-feature-settings:"liga" 0,"calt" 0;
+  padding-bottom:var(--s-16);
+}
+a{color:var(--fg);text-decoration:underline;text-decoration-style:dotted;text-underline-offset:.25em}
+a:hover,a:focus-visible{color:var(--accent)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:2px}
+::selection{background:var(--accent);color:var(--bg)}
+ul{list-style:none;margin:0;padding:0}
+h1,h2{font-weight:400;margin:0}
+
+/* ---------- utilities ---------- */
+.vh{
+  position:absolute;width:1px;height:1px;padding:0;margin:-1px;
+  overflow:hidden;clip-path:inset(50%);white-space:nowrap;border:0;
+}
+.dim{color:var(--fg-dim)}
+.faint{color:var(--fg-faint)}
+
+.skip{
+  position:absolute;left:var(--s-4);top:-4rem;z-index:20;
+  background:var(--surface);color:var(--fg);
+  padding:var(--s-2) var(--s-3);text-decoration:none;
+  transition:top .15s;
+}
+.skip:focus{top:var(--s-4)}
+
+/* ---------- layout ---------- */
+.wrap{max-width:var(--page);margin-inline:auto;padding-inline:var(--gutter)}
+.section{padding-block:var(--s-12);scroll-margin-top:var(--s-8)}
+.section+.section{border-top:1px solid var(--rule)}
+
+/* ---------- the $ command heading, reused by every section ---------- */
+.cmd{
+  font-size:var(--fs-3);
+  color:var(--fg);
+  margin:0 0 var(--s-6);
+  display:flex;align-items:baseline;gap:1ch;
+}
+.cmd .sig{color:var(--accent)}
+.cmd .sp{margin-left:auto}
+
+/* ---------- log lines ---------- */
+/* Hanging indent so wrapped text aligns under the text, not the glyph.
+   The marker is a real <span>, not ::before: CSS content alt-text
+   (content:"✓" / "") is Safari 17.4+, and where unsupported the whole
+   declaration is invalid and the glyph silently vanishes. */
+.log li{
+  padding-left:2.5ch;text-indent:-2.5ch;
+  margin-bottom:var(--s-2);font-size:var(--fs-1);
+}
+.k{display:inline-block;width:2.5ch;text-indent:0}
+.k-ok{color:var(--accent)}
+.k-to{color:var(--fg-dim)}
+.k-warn{color:var(--fg)}
+
+/* ---------- boot preamble ---------- */
+.boot{padding-top:var(--s-8)}
+.boot .prompt{font-size:var(--fs-1);margin:0 0 var(--s-4);white-space:pre;overflow:hidden}
+.boot .prompt .sig{color:var(--accent)}
+.cursor{
+  display:inline-block;width:1ch;color:var(--accent);
+  animation:blink 1.06s steps(1) infinite;
+}
+@keyframes blink{0%,50%{opacity:1}50.01%,100%{opacity:0}}
+
+/* Boot lines and hero fade in behind the typewriter. Content is present in
+   the DOM from the start -- this only animates opacity, so with JS disabled
+   or broken the .ready class never lands and the fallback below shows all. */
+.boot li,.hero,.nav{opacity:0}
+body.ready .boot li{animation:fade .32s ease-out forwards;animation-delay:calc(var(--i) * 130ms)}
+body.ready .hero{animation:fade .5s ease-out .55s forwards}
+body.ready .nav{animation:fade .5s ease-out .75s forwards}
+@keyframes fade{from{opacity:0;transform:translateY(2px)}to{opacity:1;transform:none}}
+.no-js .boot li,.no-js .hero,.no-js .nav{opacity:1}
+
+/* ---------- hero ---------- */
+.hero{
+  position:relative;
+  max-width:var(--hero-w);margin-inline:auto;
+  padding:var(--s-12) var(--gutter);
+  display:grid;gap:var(--s-8);
+}
+/* 55rem, not 768px: below this the portrait's 4fr track drops under the
+   ~10px font-size where braille dots stop being distinct. Derived, not
+   fashionable — please don't "tidy" it. */
+@media (min-width:55rem){
+  .hero{grid-template-columns:minmax(0,7fr) minmax(0,4fr);align-items:center}
+}
+.corner{position:absolute;color:var(--fg-faint);font-family:var(--font-art);line-height:1}
+.corner.tl{top:var(--s-3);left:var(--s-3)}
+.corner.tr{top:var(--s-3);right:var(--s-3)}
+.corner.bl{bottom:var(--s-3);left:var(--s-3)}
+.corner.br{bottom:var(--s-3);right:var(--s-3)}
+
+/* ---------- ASCII / braille art ---------- */
+/* An element cannot query itself, hence wrapper + <pre>.
+   font-size = 100cqi / (cols * 0.6) makes the block exactly fill its
+   container: 0.6em is the monospace advance, so N columns are N*0.6em wide.
+   min-width:0 defeats the grid item's default min-content minimum, which for
+   white-space:pre is the full unwrapped line width and would otherwise force
+   horizontal page scroll no matter how correct the font-size is. */
+.art{container-type:inline-size;min-width:0}
+.art pre{
+  margin:0;white-space:pre;font-family:var(--font-art);
+  color:var(--fg);
+  /* no overflow:hidden here — it would clip the block glyphs' intentional
+     vertical bleed on the first and last rows */
+}
+/* name: 70 cols -> 70 * 0.6 = 42 */
+.art--name pre{
+  font-size:clamp(4px,2.2vw,20px);
+  font-size:clamp(4px,calc(100cqi / 42),20px);
+  /* block glyphs are taller than 1em, so at line-height 1 they butt cleanly
+     against the row below. If seams ever appear, go DOWN toward .95 — never
+     up, or a hairline gap runs through the letters and reads as a scanline. */
+  line-height:1;
+}
+.art--name pre+pre{margin-top:.4em}
+/* portrait: 44 cols -> 44 * 0.6 = 26.4 */
+.art--port pre{
+  font-size:clamp(5px,1.7vw,13px);
+  font-size:clamp(5px,calc(100cqi / 26.4),13px);
+  /* 1.2 makes braille dots square: dot width is 0.6em/2, dot height is
+     line-height/4, equal only here. tools/make-portrait.py derives its row
+     count from this exact value — change one and you must change both. */
+  line-height:1.2;
+  color:var(--fg-dim);
+}
+
+.tagline{margin:var(--s-6) 0 0;font-size:var(--fs-1);color:var(--fg-dim)}
+.subtitle{
+  margin:var(--s-4) 0 0;font-size:var(--fs-1);color:var(--fg);
+  /* real string + letter-spacing, never literal spaces: "S O F T W A R E" as
+     text is announced "S, space, O, space…" and destroys braille output.
+     No negative margin-right to cancel the trailing letter-space -- on a
+     left-aligned block that only widens the box past its container. */
+  letter-spacing:.42em;
+}
+.meta{margin:var(--s-2) 0 0;font-size:var(--fs-0);color:var(--fg-dim);letter-spacing:0}
+
+/* ---------- command index ---------- */
+.nav{padding-block:var(--s-6);border-top:1px solid var(--rule);border-bottom:1px solid var(--rule)}
+.nav h2{font-size:var(--fs-0);color:var(--fg-faint);letter-spacing:.3em;margin-bottom:var(--s-3)}
+.cmdindex a{
+  display:block;padding:var(--s-1) var(--s-3);
+  text-decoration:none;border-left:2px solid transparent;font-size:var(--fs-1);
+}
+.cmdindex .c{display:inline-block;width:22ch;color:var(--fg)}
+.cmdindex .c .sig{color:var(--accent);margin-right:1ch}
+.cmdindex .d{color:var(--fg-dim)}
+.cmdindex a:hover,.cmdindex a:focus-visible{background:var(--surface);border-left-color:var(--accent)}
+.cmdindex a:hover .d,.cmdindex a:focus-visible .d{color:var(--fg)}
+/* below 30rem the two columns cannot both fit — stack them */
+@media (max-width:30rem){
+  .cmdindex .c{display:block;width:auto}
+  .cmdindex .d{display:block;padding-left:3ch}
+}
+
+/* ---------- entries (experience / projects / education) ---------- */
+.entry{margin-bottom:var(--s-8)}
+.entry:last-child{margin-bottom:0}
+.entry-head{
+  display:flex;flex-wrap:wrap;align-items:baseline;
+  gap:0 1ch;margin-bottom:var(--s-1);
+}
+.entry-name{color:var(--fg)}
+.entry-tag{margin-left:auto;color:var(--fg-dim);font-size:var(--fs-0)}
+.stack{color:var(--fg-dim);font-size:var(--fs-0);margin:0 0 var(--s-3)}
+.prose{max-width:var(--measure);margin:0 0 var(--s-4)}
+
+/* ---------- skills ---------- */
+.cats{color:var(--fg-dim);font-size:var(--fs-1);margin:0 0 var(--s-6)}
+.skills{
+  display:grid;gap:var(--s-3) var(--s-8);
+  grid-template-columns:repeat(auto-fit,minmax(min(14rem,100%),1fr));
+}
+.skill{display:flex;align-items:baseline;gap:1.5ch;font-size:var(--fs-1)}
+/* Spinners are 1-6 columns wide depending on the animation, which would ragged
+   the label column. Pin every box in the grid to one width so labels line up. */
+.skill [data-spinner]{width:7ch;flex:none}
+
+/* ---------- spinners ---------- */
+/* The explicit ch width is what makes a frame change incapable of reflowing.
+   contain:layout paint — NOT strict or size, which collapse the box to zero
+   height because width is set but height never is. */
+[data-spinner]{
+  display:inline-block;
+  width:calc(var(--sp-cols,6) * 1ch);
+  white-space:pre;
+  font-family:var(--font-art);
+  color:var(--fg-faint);
+  contain:layout paint;
+  vertical-align:baseline;
+}
+.cmd [data-spinner]{color:var(--rule)}
+
+/* ---------- contact ---------- */
+.contact li{display:flex;gap:1ch;margin-bottom:var(--s-2);font-size:var(--fs-1)}
+.contact .k2{display:inline-block;width:11ch;color:var(--fg-dim);flex:none}
+/* URLs have few break opportunities, and 11ch of key plus a 28ch link exceeds
+   the content box below ~390px. Let the value wrap, and stack it under its key
+   on the narrowest screens rather than let overflow-x:clip amputate it. */
+.contact a{overflow-wrap:anywhere}
+@media (max-width:24.5rem){
+  .contact li{flex-direction:column;gap:0;margin-bottom:var(--s-3)}
+  .contact .k2{width:auto}
+}
+
+.tail{padding-top:var(--s-8);font-size:var(--fs-1);color:var(--fg-dim)}
+
+/* ---------- reduced motion ---------- */
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{
+    animation-duration:.01ms !important;animation-iteration-count:1 !important;
+    transition-duration:.01ms !important;
+  }
+  .boot li,.hero,.nav{opacity:1}
+  .cursor{animation:none}
+}
+@media (prefers-reduced-motion:no-preference){
+  html{scroll-behavior:smooth}
+}
+</style>
+</head>
+<body class="no-js">
+
+<a class="skip" href="#main">skip to content</a>
+
+<header>
+  <div class="wrap boot">
+    <p class="prompt"><span class="sig">$</span> <span id="typed">npx jason --resume</span><span class="cursor" id="bootcur" aria-hidden="true">▌</span></p>
+    <ul class="log">
+      <li style="--i:0"><span class="k k-ok" aria-hidden="true">✓</span>resolved <span class="dim">jasongriller@latest</span></li>
+      <li style="--i:1"><span class="k k-ok" aria-hidden="true">✓</span>fetched 1 package <span class="dim">· orlando, florida</span></li>
+      <li style="--i:2"><span class="k k-ok" aria-hidden="true">✓</span>linked 21 skills, 6 projects, 1 role</li>
+      <li style="--i:3"><span class="k k-warn" aria-hidden="true">▲</span><span class="vh">Note: </span>resume snapshot is from sep 2024 — see <a href="#projects">projects/</a> for current work</li>
+      <li style="--i:4"><span class="k k-to" aria-hidden="true">→</span><span class="dim">ready in <span id="ms">—</span> ms</span></li>
+    </ul>
+  </div>
+
+  <div class="hero">
+    <span class="corner tl" aria-hidden="true">⡏</span>
+    <span class="corner tr" aria-hidden="true">⢹</span>
+    <span class="corner bl" aria-hidden="true">⣇</span>
+    <span class="corner br" aria-hidden="true">⣸</span>
+
+    <div>
+      <h1 class="vh">Jason Griller — Software Engineer</h1>
+      <div class="art art--name" aria-hidden="true">
+<pre>    ▄▄▄▄▄     ▄▄       ▄▄▄▄      ▄▄▄▄    ▄▄▄   ▄▄
+    ▀▀▀██    ████    ▄█▀▀▀▀█    ██▀▀██   ███   ██
+       ██    ████    ██▄       ██    ██  ██▀█  ██
+       ██   ██  ██    ▀████▄   ██    ██  ██ ██ ██
+       ██   ██████        ▀██  ██    ██  ██  █▄██
+ █▄▄▄▄▄██  ▄██  ██▄  █▄▄▄▄▄█▀   ██▄▄██   ██   ███
+  ▀▀▀▀▀    ▀▀    ▀▀   ▀▀▀▀▀      ▀▀▀▀    ▀▀   ▀▀▀
+    ▄▄▄▄   ▄▄▄▄▄▄     ▄▄▄▄▄▄   ▄▄        ▄▄        ▄▄▄▄▄▄▄▄  ▄▄▄▄▄▄
+  ██▀▀▀▀█  ██▀▀▀▀██   ▀▀██▀▀   ██        ██        ██▀▀▀▀▀▀  ██▀▀▀▀██
+ ██        ██    ██     ██     ██        ██        ██        ██    ██
+ ██  ▄▄▄▄  ███████      ██     ██        ██        ███████   ███████
+ ██  ▀▀██  ██  ▀██▄     ██     ██        ██        ██        ██  ▀██▄
+  ██▄▄▄██  ██    ██   ▄▄██▄▄   ██▄▄▄▄▄▄  ██▄▄▄▄▄▄  ██▄▄▄▄▄▄  ██    ██
+    ▀▀▀▀   ▀▀    ▀▀▀  ▀▀▀▀▀▀   ▀▀▀▀▀▀▀▀  ▀▀▀▀▀▀▀▀  ▀▀▀▀▀▀▀▀  ▀▀    ▀▀▀</pre>
+      </div>
+      <p class="subtitle">SOFTWARE ENGINEER</p>
+      <p class="meta">Orlando, Florida · <a href="mailto:jgriller1@gmail.com">jgriller1@gmail.com</a></p>
+      <p class="tagline"># i like figuring out how to make cool tech work for me</p>
+    </div>
+
+    <div class="art art--port" role="img" aria-label="Portrait of Jason Griller, rendered as dithered braille characters">
+<pre>⢕⢕⢕⢕⢜⢜⢌⢂⠂⠀⢀⠀⠀⠀⠀⠀⠀⠀⠀⢀⠂⠄⠂⠂⡂⢂⢂⠀⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⢕⢕⢕⢕⢜⢎⢎⠢⠡⠈⠀⠠⠐⠀⠀⠀⠀⠀⠀⠄⠅⡂⢁⠐⠀⠄⡀⠂⢂⠐⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⡣⡣⡣⡣⣣⢳⡑⠅⠅⢀⠈⡀⢀⠀⠀⠀⠀⠀⠂⠨⠂⠊⡀⡂⠁⠄⠠⠈⠀⠄⢁⠈⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⡇⡏⣎⢇⢧⡣⢧⢩⠨⠀⠠⠀⡀⠀⠀⠀⠀⠁⠈⠀⠀⠘⢈⢂⠑⣐⢄⢂⠐⠀⢂⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⡇⡏⣎⢮⢪⢎⢗⠔⠅⠐⠀⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⠢⠀⡈⡢⡪⡠⠀⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⡇⣏⢮⢪⡺⡕⡇⡇⡃⢈⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⠀⠑⠈⠣⢢⠀⠠⡀⠄⠀⠀⠀⠀⠀⠀⠀
+⡇⡧⡳⣕⢵⡫⡎⡎⡂⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⢀⢀⢀⢀⠀⡀⠀⠀⠀⠀⠀⢀⠕⡅⢌⡊⡂⠀⠀⠀⠀⠀⠀⠐
+⣳⢹⢜⡎⣞⢮⡣⡣⡂⠀⠀⠀⠀⢀⢠⢠⣲⢵⣯⣷⣿⣽⣿⣿⣿⣾⣾⣶⣄⠀⠀⠀⠅⡑⣿⣮⡢⠂⠀⠀⠀⠀⠀⠈
+⡮⡳⡳⣝⢮⡳⣝⢜⢌⠀⠀⠀⡰⡰⡕⣗⣽⢿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣶⡀⠀⠀⢿⣿⣏⠂⠈⠀⠀⠀⠀⢀
+⣏⢯⢯⢮⣳⢯⣗⢇⠇⠀⠀⠨⡎⡎⡮⡳⣯⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣷⠀⠀⡹⣿⣗⠡⠈⡀⠀⠀⠀⢐
+⡯⡯⡯⣗⣯⣿⣺⡕⡇⠀⠀⠀⢇⣫⡺⡮⣷⢿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠁⠀⠨⣿⣗⠅⠂⠄⠀⠀⠀⢀
+⡿⣽⣻⣽⢾⣷⣻⣺⡂⠀⠀⡨⡢⠁⠁⡀⡀⠁⠉⠙⡯⣿⡿⡟⠛⠋⠋⢉⣙⢹⢻⣿⡅⠀⠀⣿⣗⢅⠅⠕⠀⠀⠀⢀
+⡿⣯⡿⣾⣻⣯⣿⣞⣎⠀⠀⢜⠄⠂⠕⠩⠙⠈⠀⡀⢸⣺⣽⢐⠀⠂⠋⠛⠙⠯⢷⣿⡇⠀⣸⣿⣟⡆⣝⢌⠀⠀⠀⠀
+⣿⣟⣿⣟⣿⣿⣿⣞⡮⡀⠀⡱⡵⣥⣂⠖⡖⣞⣽⣽⣪⣿⣿⣿⣿⣻⣳⣻⣻⣿⣿⣿⡇⣔⣿⣿⣿⢮⡺⡌⡀⠀⠀⠐
+⣿⣿⣻⣿⣿⣿⣿⢾⡽⣐⠀⢸⢽⣿⣿⣿⣿⣿⣿⢟⣺⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣷⣿⣿⣿⣿⣳⢽⡪⠀⠀⠀⠐
+⣿⣿⣿⣿⣿⣿⣿⣯⣟⢜⡔⢱⢹⢽⢿⣿⡿⡻⡝⠿⠹⢻⠿⠿⢿⣮⠻⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣯⣟⡮⠀⠀⠀⠀
+⣿⣿⣿⣿⣿⣿⣿⡾⣗⢇⢧⢑⢸⢸⢹⢘⡰⡽⡵⣔⢴⢄⣴⣶⣿⣿⣷⣔⢹⣿⣿⣿⡟⢻⣿⣿⣿⣷⢿⣪⠀⠀⠀⠌
+⣿⣿⣿⣿⣿⣿⣿⡿⣯⢫⡳⣑⢜⡘⣾⣞⣦⣁⢈⣴⣬⣮⣾⣶⣦⣤⣴⣾⣿⣿⣿⣿⡇⣾⣿⣿⣿⣿⣿⢇⠅⠀⠀⠂
+⣿⣿⣿⣿⣿⣿⣿⡿⡯⡳⡝⡮⡐⢕⢵⣿⣿⣻⣜⢼⡻⡿⡿⣿⣿⣿⣿⣿⣿⣿⣿⠇⠳⣿⣿⣿⣿⣿⣿⡳⡀⠀⠈⠄
+⣿⣿⣿⣿⣿⣿⢿⣿⢽⡿⣻⠋⡣⢈⠪⡪⣟⢞⡮⣗⣯⣾⣽⣾⣿⣿⣿⣿⣿⠟⢵⠀⢱⠽⣿⣿⣿⣿⣿⣏⠄⠀⠨⢐
+⣿⣿⣿⣿⣿⡝⣿⢗⠭⡿⣱⠡⣚⢆⡀⠂⠊⠝⣝⢿⣿⣿⣿⣿⣿⣿⢿⠫⢃⢱⢝⣆⠄⢯⣿⣿⣿⣿⣿⣧⡁⠀⡑⠠
+⣿⣿⣿⣿⣳⣟⢾⢭⣳⢜⢽⡵⡪⣳⢵⣄⠀⠂⠠⠑⢑⠹⠩⡫⢙⠌⡐⢌⣜⡾⣝⢾⣽⣸⣿⣿⣿⣿⣿⣿⣿⣿⣶⣧
+⣿⣿⣿⣿⣽⣾⣻⣳⢯⣳⢕⢯⡧⣓⢗⡵⣗⣦⠀⠀⠀⠈⡈⡂⢅⢢⢪⣳⢯⣯⣗⣿⣿⣾⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
+⣿⣿⣽⣿⣽⣯⣿⣾⢿⣽⣳⣕⢿⡔⢕⣝⢮⠃⣬⡢⡄⡢⡢⡣⣣⡳⣽⣺⢿⣽⡞⢿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
+⣿⣿⣷⣿⣿⣿⣿⣾⣿⣿⣿⢾⣝⣿⣔⢸⢹⠐⡌⡕⣝⣾⣾⣽⣾⣿⣷⣿⣿⡯⢂⣼⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿</pre>
+    </div>
+  </div>
+
+  <nav class="wrap nav" aria-label="Sections">
+    <h2>COMMANDS</h2>
+    <ul class="cmdindex">
+      <li><a href="#about"><span class="c"><span class="sig">$</span>whoami</span><span class="d">about me</span></a></li>
+      <li><a href="#experience"><span class="c"><span class="sig">$</span>cat experience.log</span><span class="d">work history</span></a></li>
+      <li><a href="#projects"><span class="c"><span class="sig">$</span>ls projects/</span><span class="d">things i've built</span></a></li>
+      <li><a href="#education"><span class="c"><span class="sig">$</span>cat education.txt</span><span class="d">school</span></a></li>
+      <li><a href="#skills"><span class="c"><span class="sig">$</span>ls skills/</span><span class="d">what i work with</span></a></li>
+      <li><a href="#contact"><span class="c"><span class="sig">$</span>cat contact</span><span class="d">how to reach me</span></a></li>
+    </ul>
+  </nav>
+</header>
+
+<main id="main" class="wrap">
+
+  <section id="about" class="section" aria-labelledby="h-about">
+    <h2 class="cmd" id="h-about">
+      <span aria-hidden="true"><span class="sig">$</span> whoami</span>
+      <span class="vh">About</span>
+      <span class="sp" data-spinner="breathe" aria-hidden="true">⠿</span>
+    </h2>
+    <p class="prose">I'm a software developer building tools at the intersection of AI,
+      productivity, and personal growth. Right now, I'm working on LikeMinds, an AI-powered
+      goal and meetup app, while running a self-hosted homelab built from repurposed laptops.</p>
+    <ul class="log">
+      <li><span class="k k-to" aria-hidden="true">→</span><span class="dim">now</span> &nbsp;LikeMinds — AI-powered goal and meetup app</li>
+      <li><span class="k k-to" aria-hidden="true">→</span><span class="dim">now</span> &nbsp;homelab — self-hosted, built from repurposed laptops</li>
+    </ul>
+  </section>
+
+  <section id="experience" class="section" aria-labelledby="h-experience">
+    <h2 class="cmd" id="h-experience">
+      <span aria-hidden="true"><span class="sig">$</span> cat experience.log</span>
+      <span class="vh">Experience</span>
+      <span class="sp" data-spinner="scanline" aria-hidden="true">⠿</span>
+    </h2>
+    <div class="entry">
+      <div class="entry-head">
+        <span class="entry-name">data analyst intern</span>
+        <span class="dim">· james moore &amp; co. · remote</span>
+        <span class="entry-tag">mar 2023 – sep 2023</span>
+      </div>
+      <ul class="log">
+        <li><span class="k k-ok" aria-hidden="true">✓</span>queried client databases in SQL to retrieve relevant data and analyze
+          discrepancies in financial records</li>
+        <li><span class="k k-ok" aria-hidden="true">✓</span>built interactive Tableau and Power BI visualizations that presented complex
+          financial data in a user-friendly way, easing client decision-making</li>
+        <li><span class="k k-ok" aria-hidden="true">✓</span>used Alteryx and Power Query to optimize backend data processing and
+          transformation ahead of the visualization stage</li>
+      </ul>
+    </div>
+  </section>
+
+  <section id="projects" class="section" aria-labelledby="h-projects">
+    <h2 class="cmd" id="h-projects">
+      <span aria-hidden="true"><span class="sig">$</span> ls projects/</span>
+      <span class="vh">Projects</span>
+      <span class="sp" data-spinner="cascade" aria-hidden="true">⠿</span>
+    </h2>
+
+    <div class="entry">
+      <div class="entry-head"><span class="entry-name">compete-co-logbook/</span><span class="entry-tag">senior design</span></div>
+      <p class="stack">react native · aws · javascript · css</p>
+      <ul class="log">
+        <li><span class="k k-ok" aria-hidden="true">✓</span>led backend development of a logbook feature for a sports tracking app —
+          AWS Cognito for authentication, and a scalable DynamoDB schema holding useful
+          metrics across different sports</li>
+        <li><span class="k k-ok" aria-hidden="true">✓</span>refactored the React Native app for cross-platform compatibility: resolved
+          dependency conflicts, updated deprecated libraries, deployed to iOS and Android</li>
+      </ul>
+    </div>
+
+    <div class="entry">
+      <div class="entry-head"><span class="entry-name">skin-attic/</span><span class="entry-tag">client work</span></div>
+      <p class="stack">react · node.js · firebase · tailwind · typescript · css</p>
+      <ul class="log">
+        <li><span class="k k-ok" aria-hidden="true">✓</span>built a fully functional beauty web application with a small business —
+          React and Tailwind for a modern responsive UI, Firebase for a scalable backend</li>
+        <li><span class="k k-ok" aria-hidden="true">✓</span>ran Agile Scrum and delivered on time, exceeding the owners' expectations
+          on both features and deadlines</li>
+        <li><span class="k k-ok" aria-hidden="true">✓</span>integrated secure payment processing and web security best practices</li>
+      </ul>
+    </div>
+
+    <div class="entry">
+      <div class="entry-head"><span class="entry-name">cool-contacts/</span><span class="entry-tag">full stack</span></div>
+      <p class="stack">react · node.js · aws ec2 · sql</p>
+      <ul class="log">
+        <li><span class="k k-ok" aria-hidden="true">✓</span>contact manager with full CRUD — full-stack build, SQL database management,
+          deployed on AWS EC2</li>
+        <li><span class="k k-ok" aria-hidden="true">✓</span>implemented user authentication and data encryption</li>
+      </ul>
+    </div>
+
+    <div class="entry">
+      <div class="entry-head"><span class="entry-name">soccer-shootout/</span><span class="entry-tag">game</span></div>
+      <p class="stack">unity · c#</p>
+      <ul class="log">
+        <li><span class="k k-ok" aria-hidden="true">✓</span>first-person soccer game with custom 3D player models and an original
+          storyline and world</li>
+        <li><span class="k k-ok" aria-hidden="true">✓</span>AI for scorers, defenders and allied units using NavMesh pathfinding and
+          custom behavior trees</li>
+      </ul>
+    </div>
+
+    <div class="entry">
+      <div class="entry-head"><span class="entry-name">likeminds/</span><span class="entry-tag">in progress</span></div>
+      <p class="stack">ai · goals · meetups</p>
+      <ul class="log">
+        <li><span class="k k-to" aria-hidden="true">→</span>AI-powered goal and meetup app. currently building.</li>
+      </ul>
+    </div>
+
+    <div class="entry">
+      <div class="entry-head"><span class="entry-name">homelab/</span><span class="entry-tag">running</span></div>
+      <p class="stack">self-hosted · repurposed laptops</p>
+      <ul class="log">
+        <li><span class="k k-to" aria-hidden="true">→</span>self-hosted services running on hardware rebuilt from old laptops</li>
+      </ul>
+    </div>
+  </section>
+
+  <section id="education" class="section" aria-labelledby="h-education">
+    <h2 class="cmd" id="h-education">
+      <span aria-hidden="true"><span class="sig">$</span> cat education.txt</span>
+      <span class="vh">Education</span>
+      <span class="sp" data-spinner="columns" aria-hidden="true">⠿</span>
+    </h2>
+
+    <div class="entry">
+      <div class="entry-head">
+        <span class="entry-name">university of central florida</span>
+        <span class="entry-tag">aug 2022 – dec 2024</span>
+      </div>
+      <p class="stack">B.S. Computer Science · Orlando, FL · GPA 3.15 / 4.0</p>
+      <p class="stack">coursework/</p>
+      <ul class="skills" style="margin-bottom:var(--s-4)">
+        <li class="skill"><span class="dim">computer science i &amp; ii</span></li>
+        <li class="skill"><span class="dim">database systems</span></li>
+        <li class="skill"><span class="dim">mobile device software dev.</span></li>
+        <li class="skill"><span class="dim">security in computing</span></li>
+        <li class="skill"><span class="dim">ai for game programming</span></li>
+        <li class="skill"><span class="dim">senior design i &amp; ii</span></li>
+        <li class="skill"><span class="dim">robotics</span></li>
+      </ul>
+      <p class="stack">activities/</p>
+      <p class="stack">ucf google developer club · knight hacks · ucf intramural basketball</p>
+    </div>
+
+    <div class="entry">
+      <div class="entry-head"><span class="entry-name">valencia college</span></div>
+      <p class="stack">Associate in Arts · GPA 3.51 / 4.0</p>
+    </div>
+  </section>
+
+  <section id="skills" class="section" aria-labelledby="h-skills">
+    <h2 class="cmd" id="h-skills">
+      <span aria-hidden="true"><span class="sig">$</span> ls skills/</span>
+      <span class="vh">Skills</span>
+      <span class="sp" data-spinner="waverows" aria-hidden="true">⠿</span>
+    </h2>
+    <p class="cats">languages/&nbsp;&nbsp; tools/&nbsp;&nbsp; frontend/&nbsp;&nbsp; backend/</p>
+    <ul class="skills">
+      <li class="skill"><span data-spinner="braille" aria-hidden="true">⠿</span>C/C++</li>
+      <li class="skill"><span data-spinner="orbit" aria-hidden="true">⠿</span>Java</li>
+      <li class="skill"><span data-spinner="breathe" aria-hidden="true">⠿</span>Python</li>
+      <li class="skill"><span data-spinner="snake" aria-hidden="true">⠿</span>C#</li>
+      <li class="skill"><span data-spinner="pulse" aria-hidden="true">⠿</span>SQL</li>
+      <li class="skill"><span data-spinner="cascade" aria-hidden="true">⠿</span>R</li>
+      <li class="skill"><span data-spinner="columns" aria-hidden="true">⠿</span>Git</li>
+      <li class="skill"><span data-spinner="scanline" aria-hidden="true">⠿</span>GitHub</li>
+      <li class="skill"><span data-spinner="checkerboard" aria-hidden="true">⠿</span>Docker</li>
+      <li class="skill"><span data-spinner="rain" aria-hidden="true">⠿</span>AWS</li>
+      <li class="skill"><span data-spinner="sparkle" aria-hidden="true">⠿</span>Jira</li>
+      <li class="skill"><span data-spinner="waverows" aria-hidden="true">⠿</span>HTML</li>
+      <li class="skill"><span data-spinner="helix" aria-hidden="true">⠿</span>JavaScript</li>
+      <li class="skill"><span data-spinner="dna" aria-hidden="true">⠿</span>TypeScript</li>
+      <li class="skill"><span data-spinner="fillsweep" aria-hidden="true">⠿</span>React</li>
+      <li class="skill"><span data-spinner="braille" aria-hidden="true">⠿</span>Next.js</li>
+      <li class="skill"><span data-spinner="orbit" aria-hidden="true">⠿</span>Tailwind CSS</li>
+      <li class="skill"><span data-spinner="breathe" aria-hidden="true">⠿</span>Node.js</li>
+      <li class="skill"><span data-spinner="snake" aria-hidden="true">⠿</span>Firebase</li>
+      <li class="skill"><span data-spinner="pulse" aria-hidden="true">⠿</span>MongoDB</li>
+      <li class="skill"><span data-spinner="cascade" aria-hidden="true">⠿</span>MySQL</li>
+    </ul>
+    <ul class="log" style="margin-top:var(--s-6)">
+      <li><span class="k k-ok" aria-hidden="true">✓</span><span class="dim">21 modules loaded</span></li>
+    </ul>
+  </section>
+
+</main>
+
+<footer id="contact" class="wrap section" aria-labelledby="h-contact">
+  <h2 class="cmd" id="h-contact">
+    <span aria-hidden="true"><span class="sig">$</span> cat contact</span>
+    <span class="vh">Contact</span>
+    <span class="sp" data-spinner="pulse" aria-hidden="true">⠿</span>
+  </h2>
+  <ul class="contact">
+    <li><span class="k2">email</span><a href="mailto:jgriller1@gmail.com">jgriller1@gmail.com</a></li>
+    <li><span class="k2">linkedin</span><a href="https://www.linkedin.com/in/jasongriller/">linkedin.com/in/jasongriller</a></li>
+    <li><span class="k2">github</span><a href="https://github.com/jasongriller">github.com/jasongriller</a></li>
+    <li><span class="k2">resume</span><a href="assets/jason_griller_resume_se.pdf">jason_griller_resume_se.pdf</a></li>
+  </ul>
+  <p class="tail">
+    <span class="k k-to" aria-hidden="true">→</span>process exited with code 0<br>
+    <span class="cursor" aria-hidden="true">▌</span>
+  </p>
+</footer>
+
+<script>
+(function(){
+'use strict';
+document.body.classList.remove('no-js');
+
+/* Failsafe, registered before anything that could throw. The boot lines and
+   hero start at opacity 0 so the typewriter can reveal them; if any code below
+   fails, this still makes the page visible rather than leaving a blank screen. */
+setTimeout(function(){ document.body.classList.add('ready'); }, 2500);
+
+/* ===========================================================================
+   Braille spinner engine.
+
+   A braille cell is a 2x4 dot matrix, so an N-character spinner is a
+   (2N x 4) pixel canvas. Frames come from a pixel predicate rather than
+   hand-written string literals, and are precomputed once at load so the
+   runtime tick is a bare array index.
+
+   Loop closure matters: frames are indexed with % f, so a predicate whose
+   natural period is not exactly f visibly jumps at the wrap. Integer-mod
+   predicates close by construction; the sinusoidal ones must advance phase
+   by exactly 2*PI/f, which is why TAU/f appears rather than a round number.
+   =========================================================================== */
+
+var TAU = Math.PI * 2;
+/* BITS[dx][dy] -- braille numbers its dots 1,2,3,7 down the left column
+   and 4,5,6,8 down the right. */
+var BITS = [[0x01,0x02,0x04,0x40],[0x08,0x10,0x20,0x80]];
+
+function encode(fn, cols, t){
+  var W = cols*2, H = 4, s = '', c, dx, dy, m;
+  for(c=0;c<cols;c++){
+    m = 0;
+    for(dx=0;dx<2;dx++) for(dy=0;dy<4;dy++)
+      if(fn(c*2+dx, dy, t, W, H)) m |= BITS[dx][dy];
+    s += String.fromCharCode(0x2800 + m);
+  }
+  return s;
+}
+
+/* Ordered path helpers, built once. Both are closed cycles over the 12x4
+   grid so the head wraps without a jump. */
+function perimeter(W,H){
+  var p = [], i;
+  for(i=0;i<W;i++)   p.push(i + ',0');
+  for(i=1;i<H;i++)   p.push((W-1) + ',' + i);
+  for(i=W-2;i>=0;i--) p.push(i + ',' + (H-1));
+  for(i=H-2;i>0;i--) p.push('0,' + i);
+  return p;
+}
+function serpentine(W,H){
+  var p = [], r, c;
+  for(c=0;c<W;c++) p.push(c + ',0');
+  for(r=1;r<H;r++){
+    if(r%2) for(c=W-1;c>0;c--) p.push(c + ',' + r);
+    else    for(c=1;c<W;c++)   p.push(c + ',' + r);
+  }
+  for(r=H-1;r>0;r--) p.push('0,' + r);
+  return p;
+}
+function indexOfPath(path){
+  var m = Object.create(null), i;
+  for(i=0;i<path.length;i++) m[path[i]] = i;
+  return m;
+}
+var PERIM = indexOfPath(perimeter(12,4));   /* 28 cells */
+var SNAKE = indexOfPath(serpentine(12,4));  /* 40 cells */
+
+/* rain: per-column drop. Cycle lengths drawn only from {6,12} so the period
+   divides 12, with scattered phases so columns fall independently. */
+var RC = [6,12,6,12,12,6,12,6,6,12,12,6];
+var RP = [0,4,3,9,1,5,7,2,4,11,6,8];
+
+/* sparkle: rank cells by hash, then space births evenly across the cycle.
+   Hashing straight to a birth time clumps and leaves some frames empty. */
+var SPARK = (function(){
+  var cells = [], x, y;
+  for(x=0;x<12;x++) for(y=0;y<4;y++)
+    cells.push([((x*73856093) ^ (y*19349663)) >>> 0, x + ',' + y]);
+  cells.sort(function(a,b){ return a[0]-b[0]; });
+  var birth = Object.create(null), i;
+  for(i=0;i<cells.length;i++) birth[cells[i][1]] = Math.floor(i*12/cells.length);
+  return birth;
+})();
+
+var SPINNERS = {
+  /* classic single-character spinner — special-cased, not canvas-generated */
+  braille:{cols:1, ms:80, lit:'⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏'},
+
+  orbit:{cols:6, f:28, ms:55, fn:function(x,y,t){
+    return ((t - PERIM[x+','+y]) % 28 + 28) % 28 < 3;
+  }},
+  breathe:{cols:6, f:12, ms:90, fn:function(x,y,t,W){
+    return Math.abs(x - W/2 + 0.5) <= Math.abs((t%12) - 6);
+  }},
+  snake:{cols:6, f:48, ms:70, fn:function(x,y,t){
+    var i = SNAKE[x+','+y];
+    return i === undefined ? false : ((t - i) % 48 + 48) % 48 < 5;
+  }},
+  pulse:{cols:6, f:8, ms:110, fn:function(x,y,t,W,H){
+    var d = Math.sqrt(Math.pow((x-W/2)/2,2) + Math.pow(y-H/2+0.5,2));
+    return Math.abs(d - (t%8)*0.55) < 0.7;
+  }},
+  cascade:{cols:6, f:10, ms:90, fn:function(x,y,t){
+    return ((x - 2*y - t) % 10 + 10) % 10 < 3;
+  }},
+  columns:{cols:6, f:12, ms:95, fn:function(x,y,t,W,H){
+    var p = ((t - x) % 12 + 12) % 12;
+    var lvl = p < 4 ? p+1 : (p < 7 ? 7-p : 0);
+    return lvl > 0 && y >= H - lvl;
+  }},
+  scanline:{cols:6, f:12, ms:80, fn:function(x,y,t,W){
+    return Math.abs(x - (t % W)) <= 1;
+  }},
+  /* a naive (x+t)+(y+t) parity flip yields only 2 distinct frames, because
+     both shift terms advance together and parity is invariant. Drifting x at
+     half rate against a whole-field flip gives a real 4-phase march. */
+  checkerboard:{cols:6, f:4, ms:130, fn:function(x,y,t){
+    return (((((x+t)>>1) + (y>>1) + t) & 1) === 0);
+  }},
+  rain:{cols:6, f:12, ms:100, fn:function(x,y,t){
+    var d = ((t + RP[x%12]) % RC[x%12]) - y;
+    return d >= 0 && d <= 1;
+  }},
+  sparkle:{cols:6, f:12, ms:120, fn:function(x,y,t){
+    return ((t - SPARK[x+','+y]) % 12 + 12) % 12 < 2;
+  }},
+  waverows:{cols:6, f:12, ms:90, fn:function(x,y,t){
+    return y === Math.round(1.5*(1 + Math.sin(x*0.55 - t*(TAU/12))));
+  }},
+  /* the +0.013 keeps the sine off exact .5 values, where Math.round tips the
+     wrong way and frame f fails to equal frame 0 by a single dot */
+  helix:{cols:6, f:12, ms:85, fn:function(x,y,t){
+    return y === Math.round(1.5*(1 + Math.sin(x*0.85 + t*(TAU/12) + 0.013)));
+  }},
+  /* Two strands. An exact mirror pair (phase offset of PI) is symmetric under
+     t -> t + f/2, so it renders an identical pixel set and collapses 12 frames
+     to 3. Offsetting the second strand by 2.6 rather than PI still reads as a
+     helix but keeps all 12 frames distinct. */
+  dna:{cols:6, f:12, ms:110, fn:function(x,y,t){
+    var p = x*0.6 + t*(TAU/12) + 0.013;
+    return y === Math.round(1.5*(1 + Math.sin(p)))
+        || y === Math.round(1.5*(1 + Math.sin(p + 2.6)));
+  }},
+  /* fills from the left, then drains back toward the left, so frame 11 (two
+     columns lit) wraps into frame 0 (two columns lit) without a jump */
+  fillsweep:{cols:6, f:12, ms:85, fn:function(x,y,t){
+    var p = t % 12;
+    return p < 6 ? x < (p+1)*2 : x < (12 - (p-6)*2);
+  }}
+};
+
+/* Precompute every frame once. ~2.5KB total across all spinners. */
+Object.keys(SPINNERS).forEach(function(k){
+  var s = SPINNERS[k], i;
+  if(s.lit){ s.frames = s.lit.split(''); return; }
+  s.frames = [];
+  for(i=0;i<s.f;i++) s.frames.push(encode(s.fn, s.cols, i));
+});
+
+/* ---- instances ---- */
+var ASCII = ['|','/','-','\\'];
+var insts = [], seen = Object.create(null);
+
+document.querySelectorAll('[data-spinner]').forEach(function(el){
+  var def = SPINNERS[el.dataset.spinner];
+  if(!def) return;                 /* unknown name: no-op, never throw --
+                                      one typo must not kill every later init */
+  var n = (seen[el.dataset.spinner] = (seen[el.dataset.spinner] || 0) + 1) - 1;
+  var ms = def.ms;
+  if(el.dataset.spinnerSpeed) ms = Math.min(300, Math.max(50, +el.dataset.spinnerSpeed || def.ms));
+  el.style.setProperty('--sp-cols', def.cols);
+  var inst = {
+    el:el, frames:def.frames, ms:ms, vis:false,
+    /* stagger BOTH the frame index and the accumulator. Offsetting only the
+       index collides whenever the multiplier shares a factor with the frame
+       count (n*5 % 10 gives braille instances just 0,5,0,5); offsetting acc
+       desynchronises the tick boundaries themselves. */
+    i:(n*5) % def.frames.length,
+    acc:(n*37) % ms
+  };
+  el.textContent = inst.frames[inst.i];
+  el._sp = inst;
+  insts.push(inst);
+});
+
+/* ---- reduced motion ---- */
+var MQ = window.matchMedia('(prefers-reduced-motion: reduce)');
+var REDUCED = MQ.matches;
+
+/* ---- one shared ticker ---- */
+var raf = 0, running = false, last = 0, nVis = 0;
+
+function tick(now){
+  var dt = Math.min(now - last, 250);   /* rAF is suspended in hidden tabs, so
+                                           the first callback back can carry the
+                                           whole hidden duration. Clamp it. */
+  last = now;
+  for(var i=0;i<insts.length;i++){
+    var s = insts[i];
+    if(!s.vis) continue;
+    s.acc += dt;
+    if(s.acc >= s.ms){
+      s.acc %= s.ms;                    /* NOT acc = 0 -- zeroing discards the
+                                           overshoot, so every spinner quantises
+                                           up to the next rAF boundary and
+                                           same-speed spinners drift apart */
+      s.i = (s.i + 1) % s.frames.length;
+      var f = s.frames[s.i];
+      if(s.el.textContent !== f) s.el.textContent = f;   /* write only on change */
+    }
+  }
+  raf = requestAnimationFrame(tick);
+}
+
+function start(){
+  if(running || REDUCED || nVis === 0 || document.hidden) return;  /* gate mirrored
+      here AND at every call site: a stray IntersectionObserver callback would
+      otherwise resurrect the ticker right after stop() */
+  running = true;
+  last = performance.now();            /* without this the resume path
+                                          re-introduces the giant dt */
+  raf = requestAnimationFrame(tick);
+}
+function stop(){ running = false; cancelAnimationFrame(raf); }
+
+if('IntersectionObserver' in window){
+  var io = new IntersectionObserver(function(entries){
+    entries.forEach(function(e){
+      var s = e.target._sp;
+      if(!s || s.vis === e.isIntersecting) return;
+      s.vis = e.isIntersecting;
+      nVis += s.vis ? 1 : -1;
+    });
+    if(nVis > 0) start(); else stop();
+  }, {rootMargin:'100px'});
+  insts.forEach(function(s){ io.observe(s.el); });
+}else{
+  insts.forEach(function(s){ s.vis = true; }); nVis = insts.length;
+}
+
+document.addEventListener('visibilitychange', function(){
+  if(document.hidden) stop(); else start();
+});
+
+MQ.addEventListener('change', function(e){
+  REDUCED = e.matches;
+  if(REDUCED){
+    stop();
+    insts.forEach(function(s){ s.i = 0; s.acc = 0; s.el.textContent = s.frames[0]; });
+  }else start();
+});
+
+/* ---- font backstop ----
+   If the embedded subset fails to load, braille falls back to a proportional
+   system font and the grid shears. Detect by measuring, not by
+   document.fonts.check(), which answers from the declared unicode-range
+   rather than real glyph coverage. */
+function probeGlyphs(){
+  try{
+    var c = document.createElement('canvas').getContext('2d');
+    var stack = getComputedStyle(document.documentElement).getPropertyValue('--font-art');
+    c.font = '100px ' + stack;
+    if(Math.abs(c.measureText('0').width - c.measureText('⣿').width) < 1) return;
+    insts.forEach(function(s){
+      s.frames = ASCII; s.i = 0; s.el.style.setProperty('--sp-cols', 1);
+      s.el.textContent = ASCII[0];
+    });
+  }catch(err){ /* measurement unavailable: leave the braille in place */ }
+}
+if(document.fonts && document.fonts.ready) document.fonts.ready.then(probeGlyphs);
+
+/* ---- typewriter ----
+   Deliberately setTimeout rather than the shared ticker: this is a one-shot
+   ~1s effect, and folding it into the hot loop taxes every frame for the life
+   of the page. Jittered delays also read human where a fixed rate reads
+   robotic, and 5ms of error is imperceptible on a keystroke. */
+var PROMPT = 'npx jason --resume';
+var typed = document.getElementById('typed');
+var bootcur = document.getElementById('bootcur');
+
+function finish(){
+  var el = document.getElementById('ms');
+  if(el) el.textContent = String(Math.round(performance.now()));
+  if(bootcur) bootcur.remove();
+  document.body.classList.add('ready');
+  start();
+}
+
+if(REDUCED || !typed){
+  if(typed) typed.textContent = PROMPT;
+  finish();
+}else{
+  (function step(i){
+    typed.textContent = PROMPT.slice(0, i);
+    if(i < PROMPT.length) setTimeout(function(){ step(i+1); }, 30 + Math.random()*40);
+    else setTimeout(finish, 240);
+  })(1);
+}
+})();
+</script>
+</body>
+</html>

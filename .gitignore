@@ -1,0 +1,7 @@
+# authoring-time only — regenerate with the scripts in tools/
+tools/.venv/
+tools/out/
+__pycache__/
+
+.DS_Store
+*.swp
