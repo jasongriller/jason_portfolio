@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Render assets/profile_pic.jpeg as braille art for the hero block.
+"""Render tools/profile_pic.jpeg as braille art for the hero block.
 
 Two constraints drive the geometry, and both are easy to get wrong:
 
@@ -68,7 +68,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--cols", type=int, default=44)
     ap.add_argument("--contrast", type=float, default=1.7)
-    ap.add_argument("--src", default="assets/profile_pic.jpeg")
+    ap.add_argument("--src", default="tools/profile_pic.jpeg")
     args = ap.parse_args()
 
     root = pathlib.Path(__file__).resolve().parent.parent
