@@ -5,6 +5,29 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="dark">
 <meta name="theme-color" content="#0b0e0d">
+<script>
+/* Set the display mode BEFORE first paint. This has to live in <head> and write
+   to documentElement, because <body> does not exist yet -- and if the class
+   landed after first paint, anyone opening ?mode=tui or returning with tui saved
+   would watch stdout render and then snap. try/catch because localStorage throws
+   outright in some private-browsing modes, and because a broken mode read must
+   never take the page down. No JS at all -> no class -> stdout, which is the
+   correct fallback. */
+(function(){
+  var m = (/[?&]mode=(tui|stdout)\b/.exec(location.search) || [])[1];
+  /* A URL parameter beats a stored preference, so a shared ?mode=tui link shows
+     tui even to someone whose own last choice was stdout. Reading localStorage
+     can itself throw, not just writing to it. */
+  if(!m){ try{ m = localStorage.getItem('mode'); }catch(e){} }
+  /* classList.add, not className=, so this can never clobber another class.
+     A class is set in BOTH cases, which is what lets the CSS gate the toggle on
+     "JS actually ran" -- without it the control would have to be hidden by the
+     body-level .no-js class, which is only removed at the END of the body, so
+     the toggle would pop in after first paint and shift the page on every
+     single load. */
+  document.documentElement.classList.add(m === 'tui' ? 'tui' : 'stdout');
+})();
+</script>
 <title>Jason Griller — Software Engineer</title>
 <meta name="description" content="Jason Griller — software developer in Orlando, Florida. Building LikeMinds, an AI-powered goal and meetup app, and running a self-hosted homelab.">
 <!-- inline so it costs no request, and so the tab does not 404 -->
@@ -360,11 +383,176 @@ body.ready .boot li{animation:fade .28s ease-out forwards;animation-delay:calc(v
 @media (prefers-reduced-motion:no-preference){
   html{scroll-behavior:smooth}
 }
+
+/* ===========================================================================
+   TUI MODE
+   ---------------------------------------------------------------------------
+   Same font, same palette, same 24px row grid and 9px character grid as stdout.
+   The ONLY difference is affordance: in stdout everything reads as output; here
+   the same things read as controls. Think piping a command vs running lazygit.
+
+   Every rule below is scoped under `.tui` (set on <html> in the head script), so
+   stdout mode cannot regress -- if it changed, something leaked out of here.
+
+   New elements are display:none by DEFAULT and shown here. Never opacity:0:
+   the documented invariant is that nothing but the boot log may start hidden
+   that way, because it renders blank to an immediate screenshot.
+   =========================================================================== */
+
+/* ---- elements that exist only in tui ---- */
+.modebar-wrap,.actions,.viewbtn,.navlabel{display:none}
+
+/* ---- the mode toggle (chrome for BOTH modes; it is the way between them) ----
+   Gated on the <html> mode class, which the head script sets before first
+   paint. Gating on body.no-js instead would hide it through first paint and
+   then pop it in when the end-of-body script runs -- a 72px shift on every
+   load. No class (JS off) -> stays hidden, which is correct: a control that
+   cannot work must not appear. */
+.stdout .modebar-wrap,.tui .modebar-wrap{display:block;padding-top:var(--row);text-align:right}
+/* Explicit height (box-sizing is border-box globally) so the 1px border is
+   INSIDE the 2-row box. Without it the border adds 2px and the whole page below
+   lands 2px off the 24px row grid. */
+/* Bracketed, not boxed, in stdout -- the file's own .cmdindex note records that
+   a border there reads as a website nav bar rather than as more output. tui is
+   the mode where controls become boxes, so it gets the border. */
+.modebar{display:inline-flex;gap:0;height:calc(var(--row) * 2)}
+.tui .modebar{border:1px solid var(--fg-dim)}
+/* Exactly 2 rows tall. With the wrap's 1-row padding that makes the whole bar
+   3 rows = 72px, so adding it shifts the rest of the page by a whole number of
+   rows and nothing lands off the grid. It also clears the WCAG 2.5.5 AAA 44px
+   target size, which a 36px button would not. */
+.modebtn{
+  font:inherit;color:var(--fg-dim);background:none;border:0;cursor:pointer;
+  height:calc(var(--row) * 2);padding:0 2ch;
+}
+.tui .modebtn+.modebtn{border-left:1px solid var(--fg-dim)}
+.modebtn:hover{color:var(--fg)}
+/* the pressed one inverts — this is the TUI selection idiom, and at 9.35:1 it
+   is the strongest state available in the palette */
+.modebtn[aria-pressed="true"]{color:var(--accent)}
+.tui .modebtn[aria-pressed="true"]{background:var(--accent);color:var(--bg)}
+
+/* ---- what tui hides ---- */
+.tui .boot,
+.tui .art--name,
+.tui .art--port,
+.tui .subtitle,
+.tui .cmdindex .c{display:none}
+
+/* ---- title bar: promote the visually-hidden h1 rather than authoring a new one ---- */
+.tui .title{
+  position:static;width:auto;height:auto;margin:0;overflow:visible;
+  clip-path:none;white-space:normal;
+  font-size:1.5rem;line-height:calc(var(--row) * 2);   /* 2 rows — stays on grid */
+  font-weight:700;color:var(--fg);
+}
+.tui .hero{padding-block:var(--row);grid-template-columns:minmax(0,1fr)}
+.tui .meta{margin-top:0}
+
+/* ---- action buttons ---- */
+/* 2 rows = 48px, which clears the WCAG 2.5.5 AAA 44px target size while landing
+   exactly on the row grid. */
+.tui .actions{
+  display:flex;flex-wrap:wrap;gap:1ch;
+  margin-top:var(--row);
+}
+.btn{
+  display:inline-flex;align-items:center;
+  height:calc(var(--row) * 2);padding:0 2ch;
+  border:1px solid var(--fg-dim);color:var(--fg);
+  text-decoration:none;
+}
+.btn:hover,.btn:focus-visible{background:var(--accent);color:var(--bg);border-color:var(--accent)}
+
+/* ---- section nav as buttons ---- */
+.tui .nav h2{display:none}
+.tui .cmdindex{margin-left:0;display:flex;flex-wrap:wrap;gap:1ch}
+.tui .cmdindex a{
+  display:flex;align-items:center;
+  height:calc(var(--row) * 2);padding:0 2ch;
+  border:1px solid var(--fg-dim);border-left-width:1px;
+}
+.tui .cmdindex .navlabel{display:inline;color:var(--fg)}
+.tui .cmdindex .d{display:none}
+.tui .cmdindex a:hover,.tui .cmdindex a:focus-visible{
+  background:var(--accent);border-color:var(--accent);
+}
+.tui .cmdindex a:hover .navlabel,.tui .cmdindex a:focus-visible .navlabel{color:var(--bg)}
+/* stdout's .cmdindex a:hover .d rule is more specific than a generic one,
+   so it is switched off by name rather than out-weighed. */
+.tui .cmdindex a:hover .d,.tui .cmdindex a:focus-visible .d{color:inherit}
+
+/* ---- section headings: swap which half is visible ---- */
+.tui .cmd>span[aria-hidden]{display:none}
+.tui .cmd .vh{
+  position:static;width:auto;height:auto;margin:0;overflow:visible;
+  clip-path:none;white-space:normal;
+}
+
+/* ---- project rows become selectable ---- */
+/* The link exists in both modes -- a working link is an improvement everywhere.
+   tui adds the visible affordance, not the capability. */
+/* stdout needs no rule at all: .entry-name{color:--fg;font-weight:700} already
+   outranks a{}, and the global dotted underline, hover colour and focus ring
+   all apply. The link is the CAPABILITY and exists in both modes; [ view -> ]
+   is the AFFORDANCE and is tui-only. */
+.tui .viewbtn{display:inline;margin-left:auto;color:var(--accent);white-space:nowrap}
+/* #projects only -- the .entry-head in Experience and Education must not look
+   clickable. */
+.tui #projects .entry-head{
+  /* wrap, not nowrap: below ~340px the name, tag and action cannot share a line
+     and nowrap pushes the row past the viewport. Wrapped, the action simply
+     drops to its own line, still pushed right by margin-left:auto. */
+  position:relative;flex-wrap:wrap;align-items:baseline;
+  padding:calc(var(--row) / 2 - 1px) calc(2ch - 1px);
+  border:1px solid var(--fg-dim);background:var(--surface);
+}
+/* Stretched link: the whole row becomes the target without restructuring the
+   markup. Plain content:"" -- the file's caution is about content alt-text
+   syntax (content:"x" / ""), which is a different, Safari-17.4+ feature. */
+.tui #projects .entry-name::after{content:"";position:absolute;inset:0}
+.tui #projects .entry-head:hover,
+.tui #projects .entry-head:has(:focus-visible){
+  background:var(--accent);border-color:var(--accent);
+}
+/* .entry-tag and .viewbtn carry their own colour; left alone on --accent they
+   would be 1.77:1 and 1.00:1. */
+.tui #projects .entry-head:hover *,
+.tui #projects .entry-head:has(:focus-visible) *{color:var(--bg)}
+
+/* ---- contact rows become targets ---- */
+/* The <a> is the target, not the <li>: highlighting the whole row while only
+   the link is clickable is a false affordance, which is the exact failure this
+   mode exists to remove. */
+.tui .contact li{align-items:center}
+.tui .contact li+li{margin-top:var(--row)}
+.tui .trow{
+  flex:1;text-decoration:none;
+  padding:calc(var(--row) / 2 - 1px) calc(2ch - 1px);
+  border:1px solid var(--fg-dim);background:var(--surface);color:var(--fg);
+}
+.tui .trow:hover,.tui .trow:focus-visible{
+  background:var(--accent);color:var(--bg);border-color:var(--accent);
+}
 </style>
 </head>
 <body class="no-js">
 
 <a class="skip" href="#main">skip to content</a>
+
+<!-- Toggle buttons rather than a switch: these are two opposing views, both of
+     which should be visible and labelled. A switch would imply one is an on/off
+     state of the other. Hidden entirely without JS, where it cannot work. -->
+<div class="wrap modebar-wrap">
+  <div class="modebar" role="group" aria-label="Display mode">
+    <button type="button" class="modebtn" data-mode="stdout" aria-pressed="true">stdout</button>
+    <button type="button" class="modebtn" data-mode="tui" aria-pressed="false">tui</button>
+  </div>
+</div>
+<!-- aria-pressed announces "pressed", but says nothing about ~400px of page
+     reorganising. Must be in the static markup: live regions injected on demand
+     are routinely missed by screen readers. -->
+<p class="vh" id="modelive" role="status" aria-live="polite"></p>
 
 <header>
   <div class="wrap boot">
@@ -381,7 +569,7 @@ body.ready .boot li{animation:fade .28s ease-out forwards;animation-delay:calc(v
   <div class="wrap hero">
 
     <div>
-      <h1 class="vh">Jason Griller — Software Engineer</h1>
+      <h1 class="vh title">Jason Griller — Software Engineer</h1>
       <div class="art art--name" aria-hidden="true">
 <pre>   ▄▄▄▄▄     ▄▄       ▄▄▄▄      ▄▄▄▄    ▄▄▄   ▄▄
    ▀▀▀██    ████    ▄█▀▀▀▀█    ██▀▀██   ███   ██
@@ -401,6 +589,12 @@ body.ready .boot li{animation:fade .28s ease-out forwards;animation-delay:calc(v
       <p class="subtitle">SOFTWARE ENGINEER</p>
       <p class="meta">Orlando, Florida · <a href="mailto:jgriller1@gmail.com">jgriller1@gmail.com</a></p>
       <p class="tagline"># i like figuring out how to make cool tech work for me</p>
+      <div class="actions">
+        <a class="btn" href="mailto:jgriller1@gmail.com">Email</a>
+        <a class="btn" href="assets/jason_griller_resume_se.pdf" type="application/pdf">R&#233;sum&#233;</a>
+        <a class="btn" href="https://www.linkedin.com/in/jasongriller/" rel="noopener">LinkedIn</a>
+        <a class="btn" href="https://github.com/jasongriller" rel="noopener">GitHub</a>
+      </div>
     </div>
 
     <div class="art art--port" role="img" aria-label="Portrait of Jason Griller, rendered as dithered braille characters">
@@ -435,12 +629,12 @@ body.ready .boot li{animation:fade .28s ease-out forwards;animation-delay:calc(v
   <nav class="wrap nav" aria-label="Sections">
     <h2>COMMANDS</h2>
     <ul class="cmdindex">
-      <li><a href="#about"><span class="c"><span class="sig">$</span>whoami</span><span class="d">about me</span></a></li>
-      <li><a href="#experience"><span class="c"><span class="sig">$</span>cat experience.log</span><span class="d">work history</span></a></li>
-      <li><a href="#projects"><span class="c"><span class="sig">$</span>ls projects/</span><span class="d">things i've built</span></a></li>
-      <li><a href="#education"><span class="c"><span class="sig">$</span>cat education.txt</span><span class="d">school</span></a></li>
-      <li><a href="#skills"><span class="c"><span class="sig">$</span>ls skills/</span><span class="d">what i work with</span></a></li>
-      <li><a href="#contact"><span class="c"><span class="sig">$</span>cat contact</span><span class="d">how to reach me</span></a></li>
+      <li><a href="#about"><span class="c"><span class="sig">$</span>whoami</span><span class="d">about me</span><span class="navlabel">about</span></a></li>
+      <li><a href="#experience"><span class="c"><span class="sig">$</span>cat experience.log</span><span class="d">work history</span><span class="navlabel">experience</span></a></li>
+      <li><a href="#projects"><span class="c"><span class="sig">$</span>ls projects/</span><span class="d">things i've built</span><span class="navlabel">projects</span></a></li>
+      <li><a href="#education"><span class="c"><span class="sig">$</span>cat education.txt</span><span class="d">school</span><span class="navlabel">education</span></a></li>
+      <li><a href="#skills"><span class="c"><span class="sig">$</span>ls skills/</span><span class="d">what i work with</span><span class="navlabel">skills</span></a></li>
+      <li><a href="#contact"><span class="c"><span class="sig">$</span>cat contact</span><span class="d">how to reach me</span><span class="navlabel">contact</span></a></li>
     </ul>
   </nav>
 </header>
@@ -490,7 +684,10 @@ body.ready .boot li{animation:fade .28s ease-out forwards;animation-delay:calc(v
     </h2>
 
     <div class="entry">
-      <div class="entry-head"><span class="entry-name">compete-co-logbook/</span><span class="entry-tag">senior design</span></div>
+      <div class="entry-head">
+        <!-- TODO: replace with the real repo / live-demo URL -->
+        <a class="entry-name" href="https://github.com/jasongriller">compete-co-logbook/</a><span class="entry-tag">senior design</span><span class="viewbtn" aria-hidden="true">[ view &#8594; ]</span>
+      </div>
       <p class="stack">react native · aws · javascript · css</p>
       <ul class="log">
         <li><span class="k k-ok" aria-hidden="true">✓</span>led backend development of a logbook feature for a sports tracking app —
@@ -502,7 +699,10 @@ body.ready .boot li{animation:fade .28s ease-out forwards;animation-delay:calc(v
     </div>
 
     <div class="entry">
-      <div class="entry-head"><span class="entry-name">skin-attic/</span><span class="entry-tag">client work</span></div>
+      <div class="entry-head">
+        <!-- TODO: replace with the real repo / live-demo URL -->
+        <a class="entry-name" href="https://github.com/jasongriller">skin-attic/</a><span class="entry-tag">client work</span><span class="viewbtn" aria-hidden="true">[ view &#8594; ]</span>
+      </div>
       <p class="stack">react · node.js · firebase · tailwind · typescript · css</p>
       <ul class="log">
         <li><span class="k k-ok" aria-hidden="true">✓</span>built a fully functional beauty web application with a small business —
@@ -514,7 +714,10 @@ body.ready .boot li{animation:fade .28s ease-out forwards;animation-delay:calc(v
     </div>
 
     <div class="entry">
-      <div class="entry-head"><span class="entry-name">cool-contacts/</span><span class="entry-tag">full stack</span></div>
+      <div class="entry-head">
+        <!-- TODO: replace with the real repo / live-demo URL -->
+        <a class="entry-name" href="https://github.com/jasongriller">cool-contacts/</a><span class="entry-tag">full stack</span><span class="viewbtn" aria-hidden="true">[ view &#8594; ]</span>
+      </div>
       <p class="stack">react · node.js · aws ec2 · sql</p>
       <ul class="log">
         <li><span class="k k-ok" aria-hidden="true">✓</span>contact manager with full CRUD — full-stack build, SQL database management,
@@ -524,7 +727,10 @@ body.ready .boot li{animation:fade .28s ease-out forwards;animation-delay:calc(v
     </div>
 
     <div class="entry">
-      <div class="entry-head"><span class="entry-name">soccer-shootout/</span><span class="entry-tag">game</span></div>
+      <div class="entry-head">
+        <!-- TODO: replace with the real repo / live-demo URL -->
+        <a class="entry-name" href="https://github.com/jasongriller">soccer-shootout/</a><span class="entry-tag">game</span><span class="viewbtn" aria-hidden="true">[ view &#8594; ]</span>
+      </div>
       <p class="stack">unity · c#</p>
       <ul class="log">
         <li><span class="k k-ok" aria-hidden="true">✓</span>first-person soccer game with custom 3D player models and an original
@@ -535,7 +741,10 @@ body.ready .boot li{animation:fade .28s ease-out forwards;animation-delay:calc(v
     </div>
 
     <div class="entry">
-      <div class="entry-head"><span class="entry-name">likeminds/</span><span class="entry-tag">in progress</span></div>
+      <div class="entry-head">
+        <!-- TODO: replace with the real repo / live-demo URL -->
+        <a class="entry-name" href="https://github.com/jasongriller">likeminds/</a><span class="entry-tag">in progress</span><span class="viewbtn" aria-hidden="true">[ view &#8594; ]</span>
+      </div>
       <p class="stack">ai · goals · meetups</p>
       <ul class="log">
         <li><span class="k k-to" aria-hidden="true">→</span>AI-powered goal and meetup app. currently building.</li>
@@ -543,7 +752,10 @@ body.ready .boot li{animation:fade .28s ease-out forwards;animation-delay:calc(v
     </div>
 
     <div class="entry">
-      <div class="entry-head"><span class="entry-name">homelab/</span><span class="entry-tag">running</span></div>
+      <div class="entry-head">
+        <!-- TODO: replace with the real repo / live-demo URL -->
+        <a class="entry-name" href="https://github.com/jasongriller">homelab/</a><span class="entry-tag">running</span><span class="viewbtn" aria-hidden="true">[ view &#8594; ]</span>
+      </div>
       <p class="stack">self-hosted · repurposed laptops</p>
       <ul class="log">
         <li><span class="k k-to" aria-hidden="true">→</span>self-hosted services running on hardware rebuilt from old laptops</li>
@@ -624,10 +836,10 @@ body.ready .boot li{animation:fade .28s ease-out forwards;animation-delay:calc(v
       <span class="vh">Contact</span>
     </h2>
     <ul class="contact">
-      <li><span class="k2">email</span><a href="mailto:jgriller1@gmail.com">jgriller1@gmail.com</a></li>
-      <li><span class="k2">linkedin</span><a href="https://www.linkedin.com/in/jasongriller/">linkedin.com/in/jasongriller</a></li>
-      <li><span class="k2">github</span><a href="https://github.com/jasongriller">github.com/jasongriller</a></li>
-      <li><span class="k2">resume</span><a href="assets/jason_griller_resume_se.pdf">jason_griller_resume_se.pdf</a></li>
+      <li><span class="k2">email</span><a class="trow" href="mailto:jgriller1@gmail.com">jgriller1@gmail.com</a></li>
+      <li><span class="k2">linkedin</span><a class="trow" href="https://www.linkedin.com/in/jasongriller/" rel="noopener">linkedin.com/in/jasongriller</a></li>
+      <li><span class="k2">github</span><a class="trow" href="https://github.com/jasongriller" rel="noopener">github.com/jasongriller</a></li>
+      <li><span class="k2">resume</span><a class="trow" href="assets/jason_griller_resume_se.pdf" type="application/pdf">jason_griller_resume_se.pdf</a></li>
     </ul>
   </section>
 
@@ -644,6 +856,43 @@ body.ready .boot li{animation:fade .28s ease-out forwards;animation-delay:calc(v
 (function(){
 'use strict';
 document.body.classList.remove('no-js');
+
+/* ---- display mode ----
+   The class itself was already set before first paint by the head script; this
+   only wires the toggle and keeps the URL and storage in sync. */
+(function(){
+  var root = document.documentElement;
+  var btns = document.querySelectorAll('.modebtn');
+  if(!btns.length) return;
+
+  var live = document.getElementById('modelive');
+
+  function apply(mode, chosen){
+    root.classList.remove('stdout','tui');
+    root.classList.add(mode);
+    for(var i=0;i<btns.length;i++)
+      btns[i].setAttribute('aria-pressed', String(btns[i].dataset.mode === mode));
+    if(!chosen) return;                    /* the initial sync announces nothing */
+    if(live) live.textContent = mode === 'tui'
+      ? 'tui mode. Compact header, sections are buttons.'
+      : 'stdout mode. The page reads as terminal output.';
+    /* Both of these fail in ordinary conditions, not exotic ones: localStorage
+       throws in some private-browsing modes, and replaceState throws with a
+       null origin -- which is exactly what you get opening this file directly
+       from disk, the way the page is designed to be opened. Neither may be
+       allowed to break the toggle itself. */
+    try{ localStorage.setItem('mode', mode); }catch(e){}
+    try{
+      var u = new URL(location.href);
+      if(mode === 'tui') u.searchParams.set('mode','tui'); else u.searchParams.delete('mode');
+      history.replaceState(null,'',u);
+    }catch(e){}
+  }
+
+  apply(root.classList.contains('tui') ? 'tui' : 'stdout', false);
+  for(var i=0;i<btns.length;i++)
+    btns[i].addEventListener('click', function(){ apply(this.dataset.mode, true); });
+})();
 
 /* Reveal the page NOW, not from a callback further down. The fade-ins are plain
    CSS animations on their own delay chain, so they play whether or not the
