@@ -274,14 +274,21 @@ body.ready .nav{animation:fade .5s ease-out .75s forwards}
    height because width is set but height never is. */
 [data-spinner]{
   display:inline-block;
-  width:calc(var(--sp-cols,6) * 1ch);
+  /* 0.6em, not 1ch. `ch` is the advance of "0" in the first available font,
+     and the first family here is Terminal Glyphs -- which covers U+0020 (so it
+     IS first available) but has no digits, a case the spec says to resolve as
+     0.5em. Chrome and Firefox both happen to fall through to a font that has
+     "0", but relying on that is undefined behaviour. 0.6em is the real advance
+     of every glyph in the subset. */
+  width:calc(var(--sp-cols,6) * 0.6em);
   white-space:pre;
   font-family:var(--font-art);
   color:var(--fg-faint);
-  contain:layout paint;
-  vertical-align:baseline;
+  /* paint only -- layout containment synthesizes the baseline from the box
+     edges, which floats every spinner above its label inside the three
+     align-items:baseline flex rows it sits in. paint still clips. */
+  contain:paint;
 }
-.cmd [data-spinner]{color:var(--rule)}
 
 /* ---------- contact ---------- */
 .contact li{display:flex;gap:1ch;margin-bottom:var(--s-2);font-size:var(--fs-1)}
@@ -687,8 +694,13 @@ var SPINNERS = {
   orbit:{cols:6, f:28, ms:55, fn:function(x,y,t){
     return ((t - PERIM[x+','+y]) % 28 + 28) % 28 < 3;
   }},
-  breathe:{cols:6, f:12, ms:90, fn:function(x,y,t,W){
-    return Math.abs(x - W/2 + 0.5) <= Math.abs((t%12) - 6);
+  /* A triangle wave over the six real cell distances. Cell centres sit at
+     |x - W/2 + 0.5| = 0.5, 1.5 ... 5.5, so the radius must step through exactly
+     those values: any radius below 0.5 lights nothing (a blank frame) and any
+     radius at or above 5.5 lights everything (two frames in a row identical).
+     f=10 gives 0.5 .. 5.5 and back with no repeat at either turn. */
+  breathe:{cols:6, f:10, ms:90, fn:function(x,y,t,W){
+    return Math.abs(x - W/2 + 0.5) <= 0.5 + Math.abs((t % 10) - 5);
   }},
   snake:{cols:6, f:48, ms:70, fn:function(x,y,t){
     var i = SNAKE[x+','+y];
@@ -739,11 +751,12 @@ var SPINNERS = {
     return y === Math.round(1.5*(1 + Math.sin(p)))
         || y === Math.round(1.5*(1 + Math.sin(p + 2.6)));
   }},
-  /* fills from the left, then drains back toward the left, so frame 11 (two
-     columns lit) wraps into frame 0 (two columns lit) without a jump */
-  fillsweep:{cols:6, f:12, ms:85, fn:function(x,y,t){
-    var p = t % 12;
-    return p < 6 ? x < (p+1)*2 : x < (12 - (p-6)*2);
+  /* Same triangle, applied to the fill width instead of a radius. Width runs
+     2,4,6,8,10,12,10,8,6,4 over ten frames: never 0 (a blank frame) and never
+     the same two frames running, including across the wrap. A 12-frame version
+     cannot do this -- the extra two frames have to double up at the turns. */
+  fillsweep:{cols:6, f:10, ms:85, fn:function(x,y,t){
+    return x < 12 - 2 * Math.abs((t % 10) - 5);
   }}
 };
 
@@ -798,11 +811,14 @@ function tick(now){
     if(!s.vis) continue;
     s.acc += dt;
     if(s.acc >= s.ms){
-      s.acc %= s.ms;                    /* NOT acc = 0 -- zeroing discards the
-                                           overshoot, so every spinner quantises
-                                           up to the next rAF boundary and
-                                           same-speed spinners drift apart */
-      s.i = (s.i + 1) % s.frames.length;
+      /* Advance by however many whole periods elapsed, not just one. Stepping a
+         single frame and then doing acc %= ms preserves only sub-period
+         overshoot and silently drops the rest, so after a GC pause or a
+         hidden-tab resume a 55ms spinner would crawl one frame per rAF tick
+         instead of catching up. */
+      var n = Math.floor(s.acc / s.ms);
+      s.acc -= n * s.ms;
+      s.i = (s.i + n) % s.frames.length;
       var f = s.frames[s.i];
       if(s.el.textContent !== f) s.el.textContent = f;   /* write only on change */
     }
@@ -840,13 +856,18 @@ document.addEventListener('visibilitychange', function(){
   if(document.hidden) stop(); else start();
 });
 
-MQ.addEventListener('change', function(e){
+function onMotionPrefChange(e){
   REDUCED = e.matches;
   if(REDUCED){
     stop();
     insts.forEach(function(s){ s.i = 0; s.acc = 0; s.el.textContent = s.frames[0]; });
   }else start();
-});
+}
+/* MediaQueryList.addEventListener is Safari 14+; older WebKit exposes only the
+   deprecated addListener. Calling the missing one throws and aborts the rest of
+   this IIFE -- which is the typewriter and the font probe. */
+if(MQ.addEventListener) MQ.addEventListener('change', onMotionPrefChange);
+else if(MQ.addListener) MQ.addListener(onMotionPrefChange);
 
 /* ---- font backstop ----
    If the embedded subset fails to load, braille falls back to a proportional
@@ -856,11 +877,23 @@ MQ.addEventListener('change', function(e){
 function probeGlyphs(){
   try{
     var c = document.createElement('canvas').getContext('2d');
-    var stack = getComputedStyle(document.documentElement).getPropertyValue('--font-art');
+    var stack = getComputedStyle(document.documentElement).getPropertyValue('--font-art').trim();
     c.font = '100px ' + stack;
-    if(Math.abs(c.measureText('0').width - c.measureText('⣿').width) < 1) return;
+    /* canvas.font silently ignores an invalid value and keeps 10px sans-serif,
+       where every advance difference is well under the threshold below -- so a
+       failed assignment would read as "font is fine". Check it took. */
+    if(c.font.indexOf('Terminal Glyphs') === -1) return;
+    /* Compare two glyphs that are BOTH in the subset. Measuring '0' would be
+       measuring a different font entirely -- the subset has no digits, so '0'
+       resolves from the next family in the stack, which on Windows is Consolas
+       at 0.5498em against the subset's 0.6em. That 5px gap at 100px tripped
+       this check on every Windows machine even when the subset had loaded. */
+    if(Math.abs(c.measureText('⠿').width - c.measureText('▌').width) < 1) return;
     insts.forEach(function(s){
-      s.frames = ASCII; s.i = 0; s.el.style.setProperty('--sp-cols', 1);
+      s.frames = ASCII; s.i = 0; s.acc = 0;
+      s.el.style.setProperty('--sp-cols', 1);
+      s.el.style.width = '1ch';          /* beats the .skill width rule, which
+                                            is more specific than --sp-cols */
       s.el.textContent = ASCII[0];
     });
   }catch(err){ /* measurement unavailable: leave the braille in place */ }
