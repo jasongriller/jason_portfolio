@@ -76,6 +76,30 @@ number of those rows — nothing is `1.65 ×` anything. So:
 - **One rail.** Every block uses `.wrap` and nothing else, so there is exactly one
   left edge. If you add a section, give it `.wrap`.
 
+## The two display modes
+
+One DOM, two presentations. `stdout` (the default) reads as terminal output.
+`tui` keeps the same font, palette and grid but makes things read as *controls* —
+the difference between piping a command and running `lazygit`. It exists for
+visitors who need to operate the page rather than read it.
+
+The mode is a class on `<html>`, and `?mode=tui` is a shareable link.
+
+- **The mode class is set in `<head>`, on `<html>`.** It has to be. `<body>`
+  doesn't exist yet at that point, and a class applied after first paint means a
+  `?mode=tui` visitor watches stdout render and then snap. Moving this to the
+  end-of-body script reintroduces that flash.
+- **Scoping policy.** A new *unscoped* rule is allowed only if every selector
+  targets markup that did not exist before the feature. Anything touching
+  pre-existing markup must be `.tui`-prefixed. That is what makes "if stdout
+  changed, something leaked" a usable review test.
+- **Style state off the class, not off `aria-pressed`.** `aria-pressed` is
+  hardcoded in markup and only corrected by the end-of-body script, so keying CSS
+  off it paints the wrong button as selected until then. JS owns `aria-pressed`
+  for assistive tech; CSS keys off `.tui` / `.stdout`.
+- **The toggle bar must stay a whole number of rows** (currently 3), or every
+  element below it lands off the 24px grid.
+
 ## Things that will bite you
 
 - **`line-height` and the portrait's row count are coupled.** Braille dots are
@@ -103,6 +127,16 @@ number of those rows — nothing is `1.65 ×` anything. So:
 - **Nothing may start at `opacity: 0` except the boot log.** Anything hidden until
   an `animation-delay` elapses is blank to an immediate capture — Firefox's
   screenshot, a preview crawler, a slow first frame.
+- **Never put `:has()` in a comma list with a selector that must survive without
+  it.** A selector list is not forgiving: one unparseable compound invalidates the
+  whole rule. Combining `:hover, :has(:focus-visible)` cost the *hover* state in
+  every browser without `:has()`.
+- **A focus ring needs contrast against whatever is behind it, not just a box to
+  paint in.** The default ring is `--accent`; inside an element whose background
+  has flipped to `--accent` it is 1.00:1 and invisible. Checking that the element
+  has a non-zero box is not the same check.
+- **`gap: 1ch` also sets a 9px *row* gap.** On anything that wraps, that puts
+  everything below it off the 24px grid. Use `gap: var(--row) 1ch`.
 
 ## Licence
 

@@ -14,7 +14,8 @@
    never take the page down. No JS at all -> no class -> stdout, which is the
    correct fallback. */
 (function(){
-  var m = (/[?&]mode=(tui|stdout)\b/.exec(location.search) || [])[1];
+  var m = (/[?&]mode=(tui|stdout)\b/i.exec(location.search) || [])[1];
+  if(m) m = m.toLowerCase();
   /* A URL parameter beats a stored preference, so a shared ?mode=tui link shows
      tui even to someone whose own last choice was stdout. Reading localStorage
      can itself throw, not just writing to it. */
@@ -391,8 +392,11 @@ body.ready .boot li{animation:fade .28s ease-out forwards;animation-delay:calc(v
    The ONLY difference is affordance: in stdout everything reads as output; here
    the same things read as controls. Think piping a command vs running lazygit.
 
-   Every rule below is scoped under `.tui` (set on <html> in the head script), so
-   stdout mode cannot regress -- if it changed, something leaked out of here.
+   Almost every rule below is scoped under `.tui` (set on <html> by the head
+   script). The exceptions are deliberate and listed here, because "if stdout
+   changed, something leaked" is only a usable review test if the exceptions are
+   known: the display:none defaults that KEEP stdout clean, and the mode toggle
+   itself, which is chrome for both modes.
 
    New elements are display:none by DEFAULT and shown here. Never opacity:0:
    the documented invariant is that nothing but the boot log may start hidden
@@ -400,7 +404,7 @@ body.ready .boot li{animation:fade .28s ease-out forwards;animation-delay:calc(v
    =========================================================================== */
 
 /* ---- elements that exist only in tui ---- */
-.modebar-wrap,.actions,.viewbtn,.navlabel{display:none}
+.modebar-wrap,.actions,.viewbtn,.navlabel,.note{display:none}
 
 /* ---- the mode toggle (chrome for BOTH modes; it is the way between them) ----
    Gated on the <html> mode class, which the head script sets before first
@@ -412,9 +416,9 @@ body.ready .boot li{animation:fade .28s ease-out forwards;animation-delay:calc(v
 /* Explicit height (box-sizing is border-box globally) so the 1px border is
    INSIDE the 2-row box. Without it the border adds 2px and the whole page below
    lands 2px off the 24px row grid. */
-/* Bracketed, not boxed, in stdout -- the file's own .cmdindex note records that
-   a border there reads as a website nav bar rather than as more output. tui is
-   the mode where controls become boxes, so it gets the border. */
+/* Unboxed in stdout -- the file's own .cmdindex note records that a border there
+   reads as a website nav bar rather than as more output. tui is the mode where
+   controls become boxes, so only it gets the border. */
 .modebar{display:inline-flex;gap:0;height:calc(var(--row) * 2)}
 .tui .modebar{border:1px solid var(--fg-dim)}
 /* Exactly 2 rows tall. With the wrap's 1-row padding that makes the whole bar
@@ -423,14 +427,20 @@ body.ready .boot li{animation:fade .28s ease-out forwards;animation-delay:calc(v
    target size, which a 36px button would not. */
 .modebtn{
   font:inherit;color:var(--fg-dim);background:none;border:0;cursor:pointer;
-  height:calc(var(--row) * 2);padding:0 2ch;
+  /* minus the bar's 1px top+bottom border: box-sizing is border-box, so the bar's
+     content box is 46px and a definite 48px button paints over its own bottom
+     border and bleeds the pressed background 1px below it. */
+  height:calc(var(--row) * 2 - 2px);padding:0 2ch;
 }
 .tui .modebtn+.modebtn{border-left:1px solid var(--fg-dim)}
 .modebtn:hover{color:var(--fg)}
-/* the pressed one inverts — this is the TUI selection idiom, and at 9.35:1 it
-   is the strongest state available in the palette */
-.modebtn[aria-pressed="true"]{color:var(--accent)}
-.tui .modebtn[aria-pressed="true"]{background:var(--accent);color:var(--bg)}
+/* Keyed off the <html> class, NOT aria-pressed. aria-pressed is hardcoded in the
+   markup and only corrected by the end-of-body script, so a ?mode=tui load would
+   paint tui content with the "stdout" button showing as selected until then.
+   The class is set in <head>, so this is correct at first paint. JS still owns
+   aria-pressed, for assistive tech. */
+.stdout .modebtn[data-mode="stdout"],.tui .modebtn[data-mode="tui"]{color:var(--accent)}
+.tui .modebtn[data-mode="tui"]{background:var(--accent);color:var(--bg)}
 
 /* ---- what tui hides ---- */
 .tui .boot,
@@ -440,20 +450,34 @@ body.ready .boot li{animation:fade .28s ease-out forwards;animation-delay:calc(v
 .tui .cmdindex .c{display:none}
 
 /* ---- title bar: promote the visually-hidden h1 rather than authoring a new one ---- */
+/* No font-size change: the file has exactly one, and hierarchy here is weight and
+   brightness, the way .cmd already does it. A 24px title also wrapped to two lines
+   at 390px -- 4 rows for a title, pushing the buttons down, which is the opposite
+   of what tui is for. At 15px it fits one line, and 11px padding + 1px border + the
+   inherited 24px line box = exactly 48px = 2 rows, with each wrapped line adding
+   one row rather than two. */
 .tui .title{
-  position:static;width:auto;height:auto;margin:0;overflow:visible;
+  position:static;width:auto;height:auto;overflow:visible;
   clip-path:none;white-space:normal;
-  font-size:1.5rem;line-height:calc(var(--row) * 2);   /* 2 rows — stays on grid */
   font-weight:700;color:var(--fg);
+  background:var(--surface);border:1px solid var(--fg-dim);
+  padding:calc(var(--row) / 2 - 1px) calc(2ch - 1px);
+  margin:0 0 var(--row);
 }
 .tui .hero{padding-block:var(--row);grid-template-columns:minmax(0,1fr)}
-.tui .meta{margin-top:0}
+.tui .note{
+  display:block;margin:var(--row) 0 0;max-width:var(--measure);
+  padding-left:2ch;text-indent:-2ch;color:var(--fg-dim);
+}
 
 /* ---- action buttons ---- */
 /* 2 rows = 48px, which clears the WCAG 2.5.5 AAA 44px target size while landing
    exactly on the row grid. */
 .tui .actions{
-  display:flex;flex-wrap:wrap;gap:1ch;
+  display:flex;flex-wrap:wrap;
+  /* row gap first: a bare `gap:1ch` sets a 9px ROW gap as well, and these wrap on
+     every phone, which would put everything below them off the 24px grid. */
+  gap:var(--row) 1ch;
   margin-top:var(--row);
 }
 .btn{
@@ -466,11 +490,11 @@ body.ready .boot li{animation:fade .28s ease-out forwards;animation-delay:calc(v
 
 /* ---- section nav as buttons ---- */
 .tui .nav h2{display:none}
-.tui .cmdindex{margin-left:0;display:flex;flex-wrap:wrap;gap:1ch}
+.tui .cmdindex{margin-left:0;display:flex;flex-wrap:wrap;gap:var(--row) 1ch}
 .tui .cmdindex a{
   display:flex;align-items:center;
   height:calc(var(--row) * 2);padding:0 2ch;
-  border:1px solid var(--fg-dim);border-left-width:1px;
+  border:1px solid var(--fg-dim);
 }
 .tui .cmdindex .navlabel{display:inline;color:var(--fg)}
 .tui .cmdindex .d{display:none}
@@ -478,9 +502,6 @@ body.ready .boot li{animation:fade .28s ease-out forwards;animation-delay:calc(v
   background:var(--accent);border-color:var(--accent);
 }
 .tui .cmdindex a:hover .navlabel,.tui .cmdindex a:focus-visible .navlabel{color:var(--bg)}
-/* stdout's .cmdindex a:hover .d rule is more specific than a generic one,
-   so it is switched off by name rather than out-weighed. */
-.tui .cmdindex a:hover .d,.tui .cmdindex a:focus-visible .d{color:inherit}
 
 /* ---- section headings: swap which half is visible ---- */
 .tui .cmd>span[aria-hidden]{display:none}
@@ -503,7 +524,7 @@ body.ready .boot li{animation:fade .28s ease-out forwards;animation-delay:calc(v
   /* wrap, not nowrap: below ~340px the name, tag and action cannot share a line
      and nowrap pushes the row past the viewport. Wrapped, the action simply
      drops to its own line, still pushed right by margin-left:auto. */
-  position:relative;flex-wrap:wrap;align-items:baseline;
+  position:relative;align-items:baseline;
   padding:calc(var(--row) / 2 - 1px) calc(2ch - 1px);
   border:1px solid var(--fg-dim);background:var(--surface);
 }
@@ -511,20 +532,35 @@ body.ready .boot li{animation:fade .28s ease-out forwards;animation-delay:calc(v
    markup. Plain content:"" -- the file's caution is about content alt-text
    syntax (content:"x" / ""), which is a different, Safari-17.4+ feature. */
 .tui #projects .entry-name::after{content:"";position:absolute;inset:0}
-.tui #projects .entry-head:hover,
-.tui #projects .entry-head:has(:focus-visible){
-  background:var(--accent);border-color:var(--accent);
-}
-/* .entry-tag and .viewbtn carry their own colour; left alone on --accent they
-   would be 1.77:1 and 1.00:1. */
-.tui #projects .entry-head:hover *,
+/* :hover and :has() are separate blocks, NOT one comma list. A selector list is
+   not forgiving -- one unparseable compound invalidates the whole rule -- so
+   combining them means any browser without :has() (Firefox <121 incl. ESR 115,
+   Chrome <105, Safari <15.4) loses the HOVER state too. */
+.tui #projects .entry-head:hover{background:var(--accent);border-color:var(--accent)}
+.tui #projects .entry-head:has(:focus-visible){background:var(--accent);border-color:var(--accent)}
+/* Left on their own colours against --accent these would be: .entry-name 1.16:1,
+   .entry-tag 1.77:1, .viewbtn 1.00:1. */
+.tui #projects .entry-head:hover *{color:var(--bg)}
 .tui #projects .entry-head:has(:focus-visible) *{color:var(--bg)}
+/* The focus ring is drawn on the anchor INSIDE the row, and the row has just
+   turned --accent -- so the default --accent ring lands on --accent at 1.00:1
+   and vanishes. Every other control is safe because there the focused element IS
+   the one whose background flips, putting the 2px-offset ring outside it on
+   --bg. `color:inherit` would not help: outline-color is set explicitly. */
+.tui #projects .entry-head:has(:focus-visible) .entry-name{outline-color:var(--bg)}
 
 /* ---- contact rows become targets ---- */
 /* The <a> is the target, not the <li>: highlighting the whole row while only
    the link is clickable is a false affordance, which is the exact failure this
    mode exists to remove. */
 .tui .contact li{align-items:center}
+/* Must come AFTER the rule above: same specificity (0,2,1), so source order is
+   what decides. Below 24.5rem the base stylesheet flips the row to
+   flex-direction:column, where align-items works on the HORIZONTAL axis -- so
+   `center` would centre the key and the box and knock both off the left rail. */
+@media (max-width:24.5rem){
+  .tui .contact li{align-items:stretch}
+}
 .tui .contact li+li{margin-top:var(--row)}
 .tui .trow{
   flex:1;text-decoration:none;
@@ -595,6 +631,9 @@ body.ready .boot li{animation:fade .28s ease-out forwards;animation-delay:calc(v
         <a class="btn" href="https://www.linkedin.com/in/jasongriller/" rel="noopener">LinkedIn</a>
         <a class="btn" href="https://github.com/jasongriller" rel="noopener">GitHub</a>
       </div>
+      <!-- tui hides the boot log, which holds the only other copy of this caveat.
+           It belongs where someone is deciding whether to open the PDF. -->
+      <p class="note"><span class="k k-warn" aria-hidden="true">&#9650;</span><span class="vh">Note: </span>r&#233;sum&#233; PDF is from sep 2024 &mdash; see <a href="#projects">projects</a> for current work</p>
     </div>
 
     <div class="art art--port" role="img" aria-label="Portrait of Jason Griller, rendered as dithered braille characters">
@@ -872,6 +911,11 @@ document.body.classList.remove('no-js');
     root.classList.add(mode);
     for(var i=0;i<btns.length;i++)
       btns[i].setAttribute('aria-pressed', String(btns[i].dataset.mode === mode));
+    /* Persist even on the initial sync: without this, a recruiter who opens a
+       shared ?mode=tui link and never touches the toggle gets stdout next visit.
+       The URL is deliberately NOT rewritten here -- that would append
+       ?mode=stdout to every plain visit. */
+    try{ localStorage.setItem('mode', mode); }catch(e){}
     if(!chosen) return;                    /* the initial sync announces nothing */
     if(live) live.textContent = mode === 'tui'
       ? 'tui mode. Compact header, sections are buttons.'
@@ -881,7 +925,6 @@ document.body.classList.remove('no-js');
        null origin -- which is exactly what you get opening this file directly
        from disk, the way the page is designed to be opened. Neither may be
        allowed to break the toggle itself. */
-    try{ localStorage.setItem('mode', mode); }catch(e){}
     try{
       var u = new URL(location.href);
       if(mode === 'tui') u.searchParams.set('mode','tui'); else u.searchParams.delete('mode');
