@@ -153,10 +153,18 @@ named spinners in the skills grid. Before that split, 21 of the 23 moving elemen
 sat in a single band three screens down and `tui` had nothing moving above the
 fold at all.
 
-One DOM, two presentations. `stdout` (the default) reads as terminal output.
-`tui` keeps the same font, palette and grid but makes things read as *controls* —
-the difference between piping a command and running `lazygit`. It exists for
-visitors who need to operate the page rather than read it.
+One DOM, two presentations. **read** (the default) is terminal output, top to
+bottom. **browse** keeps the same font, palette and grid but turns things into
+*controls* — the difference between piping a command and running `lazygit` — and
+leads with a neofetch-style summary card: the braille portrait on the left, a
+key/value résumé table on the right.
+
+**The labels on the toggle are plain English on purpose.** `stdout` and `tui` are
+both jargon, and browse mode exists *for* the people who don't know the jargon —
+naming it after the thing they don't know defeats the point. The internal names
+did not change: `data-mode`, `?mode=tui` and the `localStorage` key all still say
+`stdout` / `tui`, so every link already shared keeps working. Only the two button
+labels and the two announcement strings are user-facing.
 
 The mode is a class on `<html>`, and `?mode=tui` is a shareable link.
 
@@ -183,6 +191,10 @@ The mode is a class on `<html>`, and `?mode=tui` is a shareable link.
   for assistive tech; CSS keys off `.tui` / `.stdout`.
 - **The toggle bar must stay a whole number of rows** (currently 3), or every
   element below it lands off the 24px grid.
+- **browse mode re-places the portrait; it never copies it.** `.tui .art--port`
+  is `order:-1` on the existing element, which is also the one carrying `role="img"`
+  and its `aria-label`. A second copy would be inert — the spinner engine scans
+  once at load.
 
 ## Things that will bite you
 
@@ -236,6 +248,20 @@ The mode is a class on `<html>`, and `?mode=tui` is a shareable link.
   paint in.** The default ring is `--accent`; inside an element whose background
   has flipped to `--accent` it is 1.00:1 and invisible. Checking that the element
   has a non-zero box is not the same check.
+- **The portrait's font-size must be a multiple of 0.8px.** It is 25 cells tall at
+  `line-height: 1.2`, so `25 × 1.2 × size` is a whole number of 24px rows only when
+  `size` is a multiple of 0.8 — 16px gives exactly 480px, 12.8px gives 384px. That
+  is what lets the summary card sit on the same baselines as the portrait beside
+  it. Rows align this way; **columns do not** — the portrait's cell is 12px wide
+  and `1ch` is 9px — so its grid track is sized in px, never `ch`.
+- **A rule under a heading must be `box-shadow`, not `border-bottom`.** A border
+  adds 1px of layout and drifts everything below it off the grid; a shadow paints
+  for free. `verify.mjs grid` measures each heading's footprint including its
+  margin, so swapping one for the other fails.
+- **The one frame on the page is a pseudo-element, not a border.** The hero is a
+  `.wrap`, so a real border draws at the wrap's outer edge — 40px left of the rail
+  every other block starts on. `::before` with `inset: 0 var(--gutter)` puts it on
+  the rail and costs no layout.
 - **`gap: 1ch` also sets a 9px *row* gap.** On anything that wraps, that puts
   everything below it off the 24px grid. Use `gap: var(--row) 1ch`.
 

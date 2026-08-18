@@ -488,15 +488,127 @@ body.ready .boot li{animation:fade .28s ease-out forwards;animation-delay:calc(v
    down, which is the opposite of what tui is for. At 15px it fits one line, and
    11px padding + 1px border + the inherited 24px line box = exactly 48px = 2
    rows, with each wrapped line adding one row rather than two. */
-.tui .title{
-  position:static;width:auto;height:auto;overflow:visible;
-  clip-path:none;white-space:normal;
-  font-weight:700;color:var(--fg);
-  background:var(--surface);border:1px solid var(--fg-dim);
-  padding:calc(var(--row) / 2 - 1px) calc(2ch - 1px);
-  margin:0 0 var(--row);
+/* ---- the fetch block: portrait left, resume summary right ----
+   neofetch's lockup, and the reason browse mode gets the portrait back rather
+   than losing it. The <h1> stops being a full-rail box holding 33 characters and
+   becomes the caption punched into this panel's top border -- which is also the
+   only frame on the page. The file's own law, written for the skills card, is
+   "one is a device; two is a pattern; six is chrome", so the six sections get a
+   rule under the heading instead of six boxes.
+
+   The <h1> is .vh in read mode, i.e. never rendered there, so restructuring it
+   cannot leak. */
+.tui .hero{
+  position:relative;
+  padding-block:var(--row);
+  /* the gutter plus 2ch, so content sits 2 columns inside the frame below */
+  padding-inline:calc(var(--gutter) + 2ch);
+  grid-template-columns:minmax(0,1fr);
 }
-.tui .hero{padding-block:var(--row);grid-template-columns:minmax(0,1fr)}
+/* The frame is a pseudo-element inset to the gutter, NOT a border on .hero.
+   .hero is a .wrap, so a real border would draw at the wrap's outer edge -- 40px
+   left of the rail every other block starts on, which reads as a misalignment
+   rather than a header pane. A pseudo-element also costs zero layout, so the
+   panel stays a whole number of rows without the usual -1px padding dance. */
+.tui .hero::before{
+  content:'';position:absolute;inset:0 var(--gutter);
+  border:1px solid var(--fg-dim);pointer-events:none;
+}
+/* Below 30rem the gutter plus a 2ch inset plus a 338px portrait no longer fits a
+   320px phone. Give the inset back and let the frame run to the screen edge --
+   which is what a terminal panel does on a small screen anyway. */
+@media (max-width:30rem){
+  .tui .hero{padding-inline:var(--gutter)}
+  .tui .hero::before{inset:0}
+}
+/* The caption sits ON the top border with a --bg patch punching the gap. That
+   only works because the hero is on the page background and not on --surface;
+   move it onto a panel and the patch stops matching. */
+.tui .title{
+  position:absolute;top:calc(var(--row) / -2);left:calc(var(--gutter) + 2ch);
+  width:auto;height:auto;overflow:visible;clip-path:none;white-space:nowrap;
+  margin:0;padding:0 1ch;border:0;
+  background:var(--bg);color:var(--fg-dim);font-weight:400;
+}
+/* A caption is nowrap by definition -- a title broken across a border reads as a
+   rendering fault. 32 characters plus the inset does not fit a 320px phone, so
+   below 30rem it drops back into the flow as the panel's first line instead. */
+@media (max-width:30rem){
+  .tui .title{
+    position:static;white-space:normal;padding:0;background:none;
+    margin-bottom:var(--row);
+  }
+}
+/* Restated as `based` and `email` rows in the card. */
+.tui .meta{display:none}
+
+.fetch{display:none}
+.tui .fetch{
+  display:grid;grid-template-columns:10ch minmax(0,1fr);
+  column-gap:1ch;row-gap:0;margin:0;
+}
+.tui .fetch dt{color:var(--fg-dim)}
+/* File names and URLs have almost no break opportunities, so a 27-character
+   value plus a 10ch key column overflows the content box on a 320px phone. Same
+   fix, and the same breakpoint, that .contact already uses: let the value break,
+   and below 24.5rem stop reserving a key column at all and stack the pair. */
+.tui .fetch dd{margin:0;color:var(--fg);overflow-wrap:anywhere}
+
+/* The portrait, re-placed into the left track. `order`, not a second copy: the
+   spinner engine scans [data-spinner] exactly once at load, so cloned markup
+   goes inert, and this element also carries the role="img" and aria-label that
+   make it legible to a screen reader.
+
+   Why this is free on the grid: the block is 44 x 25 cells, and at 20px its
+   line-height of 1.2 is exactly 24px = --row. So it is exactly 25 page rows and
+   its lines land on the same baselines as the table beside it.
+   ROWS align; COLUMNS do not -- the portrait cell is 12px wide and 1ch is 9px --
+   so the track is sized in px. Using ch here would be the same mistake the
+   --font-art rule already warns about, one level up. */
+@media (min-width:56rem){
+  .tui .hero{
+    grid-template-columns:calc(44 * 0.6 * 16px) minmax(0,1fr);
+    /* NOT the inherited `center`: centring slides the portrait against the table
+       and destroys the line-for-line alignment that is the entire point. */
+    align-items:start;
+  }
+}
+.tui .art--port{display:block;order:-1}
+/* Fixed sizes, not the container query the hero uses, and every one a multiple of
+   0.8px -- because 25 rows x 1.2 x size is a whole number of 24px rows only then.
+   16px -> 422x480 = 20 rows.  12.8px -> 338x384 = 16 rows, and 338 still fits the
+   358px content box of a 390px phone.  10.4px -> 274x312 = 13 rows, fitting the
+   288px box at 320px. Specificity here is (0,2,1) against the (0,1,1) cap rule
+   above, so this wins regardless of source order -- but it is placed after it
+   anyway, because that pair has already been read the wrong way twice.
+
+   16px and not the 20px the two-column read mode allows: braille art is a fixed
+   dot count, so scaling it up spreads the same dots over more area and the face
+   reads paler and sparser, not bigger. 16px also leaves the summary column 50
+   characters instead of 38, which is the difference between four wrapped rows
+   and none. */
+/* The size ladder and the one-column/two-column split are separate decisions:
+   40rem is simply where a 422px portrait fits the content box, while the split
+   waits for 56rem, where the summary column is still wide enough not to wrap
+   every value. */
+.tui .art--port pre{font-size:12.8px}                              /* 338x384 = 16 rows */
+@media (min-width:40rem){ .tui .art--port pre{font-size:16px} }    /* 422x480 = 20 rows */
+@media (max-width:23rem){ .tui .art--port pre{font-size:9.6px} }   /* 253x288 = 12 rows */
+/* The tagline is voice, not a table row -- without this it reads as one more
+   key-less entry glued to `resume`. */
+.tui .tagline{margin-top:var(--row)}
+
+/* ---- section headings get a rule, not a frame ----
+   k9s and tmux use a rule under a pane header far more often than a full box, and
+   a rule has no width problem: it spans the rail while the prose under it stays
+   at 80ch. box-shadow, NEVER border-bottom -- a border adds 1px of layout and
+   drifts everything below off the 24px grid, which this file has shipped twice.
+   The 12px + 12px split keeps the heading's total footprint at exactly one row. */
+.tui .cmd{
+  box-shadow:0 1px 0 var(--fg-dim);
+  padding-bottom:calc(var(--row) / 2);
+  margin-bottom:calc(var(--row) / 2);
+}
 .tui .note{
   display:block;margin:var(--row) 0 0;max-width:var(--measure);
   padding-left:2ch;text-indent:-2ch;color:var(--fg-dim);
@@ -618,9 +730,14 @@ body.ready .boot li{animation:fade .28s ease-out forwards;animation-delay:calc(v
        and both art blocks. It sits in chrome both modes show, at the top of the
        page at every viewport size. Ornament: aria-hidden, --fg-faint. -->
   <span class="statusdot" data-spinner="dna" aria-hidden="true">⠿⠿⠿⠿⠿⠿</span>
-  <div class="modebar" role="group" aria-label="Display mode">
-    <button type="button" class="modebtn" data-mode="stdout" aria-pressed="true">stdout</button>
-    <button type="button" class="modebtn" data-mode="tui" aria-pressed="false">tui</button>
+  <!-- The labels are plain English on purpose. "stdout" and "tui" are both jargon,
+       and the second mode exists FOR the people who don't know the jargon -- naming
+       it after the thing they don't know defeats the point. The data-mode values,
+       the ?mode= parameter and the localStorage key deliberately keep the old names
+       so that every ?mode=tui link already shared still works. -->
+  <div class="modebar" role="group" aria-label="View">
+    <button type="button" class="modebtn" data-mode="stdout" aria-pressed="true">read</button>
+    <button type="button" class="modebtn" data-mode="tui" aria-pressed="false">browse</button>
   </div>
 </div>
 <!-- aria-pressed announces "pressed", but says nothing about ~400px of page
@@ -661,6 +778,29 @@ body.ready .boot li{animation:fade .28s ease-out forwards;animation-delay:calc(v
    ▀▀▀▀   ▀▀    ▀▀▀  ▀▀▀▀▀▀   ▀▀▀▀▀▀▀▀  ▀▀▀▀▀▀▀▀  ▀▀▀▀▀▀▀▀  ▀▀    ▀▀▀</pre>
       </div>
       <p class="subtitle">SOFTWARE ENGINEER</p>
+      <!-- The browse-mode summary card. display:none by default and shown under
+           .tui, the same pattern .actions, .note, .viewbtn and .navlabel use.
+           This is NEW markup, not duplicated markup -- it holds no [data-spinner],
+           so the engine's once-at-load scan is not a concern.
+           Every row traces to the resume or to copy already on this page. There
+           are deliberately no invented system stats: a neofetch pastiche is
+           exactly where "uptime" and "kernel" would be easiest to fabricate. -->
+      <dl class="fetch">
+        <dt>role</dt><dd>Software Engineer</dd>
+        <dt>based</dt><dd>Orlando, Florida</dd>
+        <dt>email</dt><dd><a href="mailto:jgriller1@gmail.com">jgriller1@gmail.com</a></dd>
+        <dt>focus</dt><dd>AI, productivity, personal growth</dd>
+        <dt>work</dt><dd>data analyst intern · james moore &amp; co. · 2023</dd>
+        <dt>school</dt><dd>B.S. Computer Science · UCF · 2022&#8211;2024<br>Associate in Arts · Valencia College</dd>
+        <dt>building</dt><dd>LikeMinds &#8212; AI goal and meetup app<br>homelab &#8212; self-hosted, repurposed laptops</dd>
+        <dt>lang</dt><dd>C/C++ · Java · Python · C# · SQL · R</dd>
+        <dt>web</dt><dd>React · Next.js · TypeScript · Tailwind CSS</dd>
+        <dt>server</dt><dd>Node.js · Firebase · MongoDB · MySQL</dd>
+        <dt>tools</dt><dd>Git · Docker · AWS · Jira</dd>
+        <dt>projects</dt><dd>6</dd>
+        <dt>skills</dt><dd>21</dd>
+        <dt>resume</dt><dd><a href="assets/jason_griller_resume_se.pdf" type="application/pdf">jason_griller_resume_se.pdf</a> · sep 2024</dd>
+      </dl>
       <p class="meta">Orlando, Florida · <a href="mailto:jgriller1@gmail.com">jgriller1@gmail.com</a></p>
       <p class="tagline"># i like figuring out how to make cool tech work for me</p>
       <div class="actions">
@@ -962,8 +1102,8 @@ document.body.classList.remove('no-js');
     try{ localStorage.setItem('mode', mode); }catch(e){}
     if(!chosen) return;                    /* the initial sync announces nothing */
     if(live) live.textContent = mode === 'tui'
-      ? 'tui mode. Compact header, sections are buttons.'
-      : 'stdout mode. The page reads as terminal output.';
+      ? 'Browse view. Summary card, sections are buttons.'
+      : 'Read view. The page reads as terminal output.';
     /* Both of these fail in ordinary conditions, not exotic ones: localStorage
        throws in some private-browsing modes, and replaceState throws with a
        null origin -- which is exactly what you get opening this file directly

@@ -23,7 +23,13 @@ Needs Node 18+ and `google-chrome`. Zero dependencies, no temp files. Every chec
 in it exists because that exact defect shipped once — including three added when
 the rail was widened to 68rem: `measure` (no line of text outruns 80 columns
 however wide the shell gets), `hero` (both ASCII blocks resolve to one cell size)
-and `stagger` (instances of one spinner do not start on the same frame).
+and `stagger` (instances of one spinner do not start on the same frame), plus
+`fetch`, which pins the browse-mode summary card to the portrait's baselines.
+
+The two modes are labelled **read** and **browse** in the UI but are `stdout` /
+`tui` everywhere in the code — `data-mode`, `?mode=`, the `localStorage` key and
+every CSS selector. Don't "fix" that inconsistency; it is what keeps already-shared
+`?mode=tui` links working.
 
 It does not cover everything. Two things still have to be done by hand:
 
@@ -84,7 +90,7 @@ it is not just the `toilet` command.
 - **Don't add a build step, a dependency, or a framework.** The constraint is the
   point. `tools/verify.mjs` is deliberately zero-dependency for the same reason.
 - **Don't duplicate DOM for the second display mode.** One DOM, two
-  presentations. Beyond the maintenance cost, the spinner engine calls
+  presentations — browse mode re-places the portrait with `order`, never a clone. Beyond the maintenance cost, the spinner engine calls
   `querySelectorAll('[data-spinner]')` exactly once at load, so a spinner added
   to a second copy of a section is inert — a bug that looks like a CSS problem.
 - **Don't add an unscoped CSS rule that touches pre-existing markup.** New rules

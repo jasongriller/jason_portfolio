@@ -463,10 +463,63 @@ check('hero', 'both hero art blocks resolve to the same cell size and fill their
   });
 
 
+/* --- the browse-mode fetch lockup ---------------------------------------- */
+check('fetch', 'the portrait and the summary card line up as one block',
+  async ({ page, origin, fail }) => {
+    /* The lockup only reads as one object if the portrait's lines sit on the same
+       baselines as the table beside it. That works because 25 cells at
+       line-height 1.2 x 16px is exactly 25 x 24px -- a coincidence worth pinning,
+       because any font-size that is not a multiple of 0.8px silently breaks it. */
+    for (const w of [390, 820, 896, 1088, 1440, 1920]) {
+      await page.setWidth(w);
+      await page.goto(`${origin}/?mode=tui`);
+      const f = await page.eval(`${HELPERS}
+        (() => {
+          const pre = document.querySelector('.art--port pre');
+          const dl  = document.querySelector('.fetch');
+          if (!pre || !dl) return null;
+          const cs = getComputedStyle(pre);
+          const pr = pre.getBoundingClientRect(), dr = dl.getBoundingClientRect();
+          const dt = dl.querySelector('dt');
+          return {
+            visible: __vis(pre) && __vis(dl),
+            fontSize: Math.round(parseFloat(cs.fontSize) * 1000) / 1000,
+            lineHeight: Math.round(parseFloat(cs.lineHeight) * 100) / 100,
+            /* fromCharCode(10), not a '\n' literal: this whole expression is
+               inside a template literal, where the escape resolves before the page
+               ever sees it and leaves an unterminated regex. */
+            lines: pre.textContent.trimEnd().split(String.fromCharCode(10)).length,
+            sideBySide: Math.abs(pr.top - dr.top) < 2 && pr.right <= dr.left + 1,
+            portTop: Math.round(pr.top * 100) / 100,
+            rowTop: dt ? Math.round(dt.getBoundingClientRect().top * 100) / 100 : null,
+            overlap: Math.round((pr.right - dr.left) * 100) / 100,
+          };
+        })()`);
+      if (!f) { fail(`@${w}px: the portrait or the summary card is missing in browse mode`); continue; }
+      if (!f.visible) { fail(`@${w}px: browse mode is hiding the portrait or the summary card`); continue; }
+      if (f.lines !== 25) fail(`@${w}px: portrait is ${f.lines} lines, expected 25 - the size ladder assumes it`);
+      /* font-size must be a multiple of 0.8px so 25 x 1.2 x size is whole rows */
+      if (Math.abs(f.fontSize / 0.8 - Math.round(f.fontSize / 0.8)) > 0.001) {
+        fail(`@${w}px: portrait font-size is ${f.fontSize}px, not a multiple of 0.8px - its height cannot be whole rows`);
+      }
+      if (Math.abs(f.lineHeight - f.fontSize * 1.2) > 0.1) {
+        fail(`@${w}px: portrait line-height is ${f.lineHeight}px, not 1.2 x ${f.fontSize}px - braille dots stop being square`);
+      }
+      /* Only meaningful side by side; stacked, the two share a column on purpose. */
+      if (f.sideBySide && f.overlap > 1) fail(`@${w}px: the portrait overlaps the summary card by ${f.overlap}px`);
+      /* Above the split, the two must start on the same line, not be centred
+         against each other -- align-items:center is the failure mode here. */
+      if (w >= 896 && !f.sideBySide) {
+        fail(`@${w}px: portrait and summary card are not aligned side by side (top ${f.portTop} vs row ${f.rowTop})`);
+      }
+    }
+  });
+
+
 /* --- the 24px row grid -------------------------------------------------- */
 check('grid', 'tui controls stay on the 24px row grid when they wrap',
   async ({ page, origin, fail }) => {
-    for (const w of [320, 375, 480, 768, 1024]) {
+    for (const w of [320, 375, 390, 480, 768, 820, 896, 1024, 1440, 1920]) {
       await page.setWidth(w);
       await page.goto(`${origin}/?mode=tui`);
       const g = await page.eval(`${HELPERS}
@@ -476,8 +529,44 @@ check('grid', 'tui controls stay on the 24px row grid when they wrap',
             .map(a => Math.round(a.getBoundingClientRect().top * 100) / 100))].sort((a, b) => a - b);
           const heights = [...new Set([...document.querySelectorAll('.cmdindex a')]
             .map(a => Math.round(a.getBoundingClientRect().height * 100) / 100))];
-          return { bar: bar ? Math.round(bar.getBoundingClientRect().height * 100) / 100 : null, tops, heights };
+          /* Every boxed control in browse mode, not just the nav. All of these
+             derive 48px the same way -- 1px border + 11px padding + the 24px
+             inherited line box -- and a change to any one of them drifts
+             everything below it. */
+          const boxes = [];
+          for (const sel of ['.title', '.btn', '#projects .entry-head', '.trow', '.art--port pre']) {
+            for (const el of document.querySelectorAll(sel)) {
+              if (!__vis(el)) continue;
+              boxes.push({ sel, h: Math.round(el.getBoundingClientRect().height * 100) / 100 });
+            }
+          }
+          /* Section headings carry their rule as a box-shadow precisely because a
+             border would add 1px of layout. Measuring the box alone would not
+             notice -- what has to stay on the grid is the heading's whole
+             footprint, box plus margin. */
+          const heads = [...document.querySelectorAll('.cmd')].filter(__vis).map(el => {
+            const cs = getComputedStyle(el);
+            return Math.round((el.getBoundingClientRect().height
+                             + parseFloat(cs.marginBottom || 0)) * 100) / 100;
+          });
+          return { bar: bar ? Math.round(bar.getBoundingClientRect().height * 100) / 100 : null,
+                   tops, heights, boxes, heads: [...new Set(heads)] };
         })()`);
+      for (const h of g.heads) {
+        if (Math.abs(h - Math.round(h / ROW) * ROW) > 0.75) {
+          fail(`@${w}px: a section heading occupies ${h}px including its margin, not a whole number of ${ROW}px rows`);
+        }
+      }
+      for (const b of g.boxes) {
+        /* Tolerance, not equality. Chrome resolves line-height in 1/64px
+           LayoutUnits, so a 25-line block at line-height 1.2 lands up to half a
+           pixel short of its arithmetic height (16px -> 479.69, not 480). That is
+           quantization, not drift, and it does not accumulate down the page. A
+           stray 1px border still exceeds 0.75 and still fails. */
+        if (Math.abs(b.h - Math.round(b.h / ROW) * ROW) > 0.75) {
+          fail(`@${w}px: ${b.sel} is ${b.h}px tall, not a whole number of ${ROW}px rows`);
+        }
+      }
       if (g.bar === null) fail(`@${w}px: no .modebar-wrap in tui`);
       else if (g.bar % ROW !== 0) fail(`@${w}px: mode bar is ${g.bar}px, not a whole number of ${ROW}px rows`);
       for (const h of g.heights) {
