@@ -5,7 +5,7 @@ A single-page resume site with a terminal aesthetic. Everything is in
 framework and no build step: what is in the repo is what the browser gets.
 
 ```
-index.html    the entire site (~81 KB, ~30 KB over the wire)
+index.html    the entire site (~83 KB, ~31 KB over the wire)
 assets/       the resume PDF
 tools/        authoring scripts, the headshot they read, and the verifier
               (tools/out/ is generated and gitignored)
@@ -41,8 +41,8 @@ GitHub Pages, no workflow needed: **Settings → Pages → Deploy from a branch 
 
 ## Editing
 
-`index.html` is the source of truth — edit it directly. Two blobs inside it are
-generated, and both have a script that reproduces them:
+`index.html` is the source of truth — edit it directly. Three blobs inside it are
+generated, and each has a script that reproduces it byte for byte:
 
 ```sh
 python3 -m venv tools/.venv && tools/.venv/bin/pip install fonttools brotli pillow
@@ -57,7 +57,8 @@ source image, so nothing to license. It also writes `scene.png`, a preview that
 renders the dot grid the way a terminal does, because judging braille line art from
 the raw characters is hopeless.
 
-Paste those into the `@font-face` `src` and the `.art--port` `<pre>`. The script
+Paste those into the `@font-face` `src`, the `.art--port` `<pre>` and the
+`.art--scene` `<pre>` respectively. The script
 defaults are the values the committed art was rendered at, so running them bare
 reproduces what is already there.
 
@@ -151,19 +152,22 @@ and picks its own pitch, 24px:
   forgets `max-width: var(--measure)` is invisible until you meet a 110-character
   line; `node tools/verify.mjs measure` is the guard.
 
-## The two display modes
+## Motion
 
-Motion is deliberately spread rather than pooled: one 1-character spinner per
-section heading (the command is still running), one in the mode bar, and the 15
-named spinners in the skills grid. Before that split, 21 of the 23 moving elements
-sat in a single band three screens down and `tui` had nothing moving above the
-fold at all.
+Deliberately spread rather than pooled: one 1-character spinner per section heading
+(the command is still running), one in the mode bar, and the 15 named spinners in
+the skills grid — 33 instances of 15 definitions. Before that split, 21 of the 23
+moving elements sat in a single band three screens down and browse mode had nothing
+moving above the fold at all.
+
+## The two display modes
 
 One DOM, two presentations. **read** (the default) is terminal output, top to
 bottom. **browse** keeps the same font, palette and grid but turns things into
 *controls* — the difference between piping a command and running `lazygit` — and
-leads with a neofetch-style summary card: the braille portrait on the left, a
-key/value résumé table on the right.
+leads with a neofetch-style summary card: an isometric workspace drawing on the
+left, a short key/value résumé table on the right. The braille portrait is read
+mode's; browse mode shows the scene instead — see *Where each fact lives*.
 
 **The labels on the toggle are plain English on purpose.** `stdout` and `tui` are
 both jargon, and browse mode exists *for* the people who don't know the jargon —

@@ -20,11 +20,15 @@ node tools/verify.mjs focus grid # a subset while iterating
 ```
 
 Needs Node 18+ and `google-chrome`. Zero dependencies, no temp files. Every check
-in it exists because that exact defect shipped once — including three added when
-the rail was widened to 68rem: `measure` (no line of text outruns 80 columns
-however wide the shell gets), `hero` (both ASCII blocks resolve to one cell size)
-and `stagger` (instances of one spinner do not start on the same frame), plus
-`fetch`, which pins the browse-mode summary card to the portrait's baselines.
+in it exists because that exact defect shipped once. `node tools/verify.mjs --list`
+is the current inventory and is the thing to trust — at the time of writing it is
+`rail`, `overflow`, `focus`, `measure`, `hero`, `fetch`, `grid`, `mode`, `font`,
+`spinners`, `stagger`, `once`, `nojs`. The less obvious ones: `measure` (no line of
+text outruns 80 columns however wide the shell gets), `hero` (read mode's two ASCII
+blocks resolve to one cell size), `fetch` (browse mode's scene and summary card sit
+on the same baselines, and exactly one art block is visible per mode), `stagger`
+(instances of one spinner do not start on the same frame) and `once` (each mode
+hides the summary the other mode restates).
 
 The two modes are labelled **read** and **browse** in the UI but are `stdout` /
 `tui` everywhere in the code — `data-mode`, `?mode=`, the `localStorage` key and
@@ -81,7 +85,7 @@ is a claim about what he does. Those labels were once deleted as decoration; the
 are not. Same for `EDUCATION`'s `Relevant Coursework` and `Extracurriculars`, which
 the page renders as `coursework/` and `activities/`.
 
-## Regenerating the two embedded blobs
+## Regenerating the three embedded blobs
 
 Both have a script, both scripts default to exactly what is committed, and both
 write to the gitignored `tools/out/`:
@@ -110,20 +114,19 @@ it is not just the `toilet` command.
   point. `tools/verify.mjs` is deliberately zero-dependency for the same reason.
 - **Don't duplicate DOM for the second display mode.** One DOM, two
   presentations. The two modes show different art blocks, but they *swap* — one is
-  hidden while the other shows — never a clone of one element.
-- **Don't state a fact twice in one mode.** The two modes deliberately carry two
-  copies of some summaries and hide one per mode — `.meta` and `#about`'s `.now`
-  list are hidden in browse because the card restates them; the card is hidden in
-  read. `node tools/verify.mjs once` asserts each pair. Before adding a line, grep
-  the rendered text: at the last audit, LikeMinds and homelab were each stated four
-  times in browse mode, twice inside `#about` alone.
-- **Don't restate below-the-fold content in the browse summary card.** It was
-  fourteen rows once, and an audit found **zero** of them unique: 79% of its
-  characters repeated text further down the page, and one fact appeared three
-  times. It is five rows now. Anything added to it should be something a visitor
-  cannot read one scroll later. Beyond the maintenance cost, the spinner engine calls
-  `querySelectorAll('[data-spinner]')` exactly once at load, so a spinner added
-  to a second copy of a section is inert — a bug that looks like a CSS problem.
+  hidden while the other shows — never a clone. Beyond the maintenance cost, the
+  spinner engine calls `querySelectorAll('[data-spinner]')` exactly once at load,
+  so a spinner inside a second copy of a section is inert — a bug that looks like
+  a CSS problem.
+- **Don't state a fact twice in one mode.** Some summaries exist in two places and
+  are hidden per mode: `.meta` and `#about`'s `.now` list are hidden in browse
+  because the summary card restates them, and the card is hidden in read.
+  `node tools/verify.mjs once` asserts each pair; a new pair has to be added to it.
+  Before adding any line, grep the *rendered* text rather than the source. The card
+  was fourteen rows once and an audit found **zero** of them unique — 79% of its
+  characters repeated text further down the page — while LikeMinds and homelab were
+  each stated four times in browse mode, twice inside `#about` alone. It is five
+  rows now, and nothing in it can be read one scroll later.
 - **Don't add an unscoped CSS rule that touches pre-existing markup.** New rules
   for tui must be `.tui`-prefixed unless every selector targets markup that did
   not exist before. That is what keeps "if stdout changed, something leaked" a
