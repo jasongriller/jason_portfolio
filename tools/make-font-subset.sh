@@ -8,7 +8,8 @@
 # spinner grid jitter differently on every OS.
 #
 # Adwaita Mono's advance is exactly 600/1000em -- identical to JetBrains Mono --
-# so no size-adjust is required. Verified with tools/check-metrics.py.
+# so no size-adjust is required. `node tools/verify.mjs font` re-checks that in a
+# real browser: every glyph in the subset must measure the same as the body font.
 #
 # Source font: Adwaita Mono, SIL Open Font License 1.1.
 #   https://gitlab.gnome.org/GNOME/adwaita-fonts

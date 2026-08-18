@@ -20,7 +20,10 @@ Two constraints drive the geometry, and both are easy to get wrong:
    come out square and this reduces to rows = A * cols / 2. Rendering at
    cols/4 -- the intuitive but wrong guess -- squashes the face by half.
 
-Usage:  tools/make-portrait.py [--cols 44] [--contrast 1.7]
+The defaults are the values the committed art was rendered at, so running
+this bare reproduces it byte for byte.
+
+Usage:  tools/make-portrait.py [--cols 44] [--contrast 2.0]
         writes tools/out/portrait.txt
 """
 import argparse
@@ -67,7 +70,7 @@ def render(img, cols, contrast, crop=None, cutoff=3):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--cols", type=int, default=44)
-    ap.add_argument("--contrast", type=float, default=1.7)
+    ap.add_argument("--contrast", type=float, default=2.0)  # what is in index.html
     ap.add_argument("--src", default="tools/profile_pic.jpeg")
     args = ap.parse_args()
 

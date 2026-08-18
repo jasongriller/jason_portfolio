@@ -83,12 +83,14 @@
      family and cannot shear. */
   --font-art:'Terminal Glyphs',ui-monospace,'DejaVu Sans Mono',Menlo,Consolas,monospace;
 
-  /* A terminal has exactly two units: one column and one row. Measured off the
-     reference screenshot, every line sits on a 28px pitch and every gap is an
-     integer number of those rows -- nothing is 1.65x anything. So: ONE font
-     size, which makes 1ch the same 9px page-wide and puts every horizontal
-     measure on one character grid; and ONE row height, which every vertical
-     distance is a multiple of. */
+  /* A terminal has exactly two units: one column and one row. On the reference
+     screenshot every line sits on a 28px pitch and every gap is an integer
+     number of those rows -- nothing is 1.65x anything. This page keeps the
+     system and picks its own pitch: ONE text size, which makes 1ch the same 9px
+     page-wide and puts every horizontal measure on one character grid, and ONE
+     row height of 24px, which every vertical distance is a multiple of.
+     The only font-size declarations outside --fs are on the two art <pre>
+     blocks, whose size is a function of container width, not of hierarchy. */
   --fs:.9375rem;   /* 15px -> 1ch = 9px everywhere */
   --row:1.5rem;    /* 24px -> the only vertical unit */
 
@@ -450,12 +452,12 @@ body.ready .boot li{animation:fade .28s ease-out forwards;animation-delay:calc(v
 .tui .cmdindex .c{display:none}
 
 /* ---- title bar: promote the visually-hidden h1 rather than authoring a new one ---- */
-/* No font-size change: the file has exactly one, and hierarchy here is weight and
-   brightness, the way .cmd already does it. A 24px title also wrapped to two lines
-   at 390px -- 4 rows for a title, pushing the buttons down, which is the opposite
-   of what tui is for. At 15px it fits one line, and 11px padding + 1px border + the
-   inherited 24px line box = exactly 48px = 2 rows, with each wrapped line adding
-   one row rather than two. */
+/* No font-size change: text has exactly one size here as everywhere, and the
+   hierarchy is weight and brightness, the way .cmd already does it. A 24px title
+   also wrapped to two lines at 390px -- 4 rows for a title, pushing the buttons
+   down, which is the opposite of what tui is for. At 15px it fits one line, and
+   11px padding + 1px border + the inherited 24px line box = exactly 48px = 2
+   rows, with each wrapped line adding one row rather than two. */
 .tui .title{
   position:static;width:auto;height:auto;overflow:visible;
   clip-path:none;white-space:normal;

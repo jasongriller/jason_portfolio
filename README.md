@@ -2,12 +2,15 @@
 
 A single-page resume site with a terminal aesthetic. Everything is in
 `index.html` — markup, styles, script, and an embedded font subset. No
-framework, no build step, no dependencies.
+framework and no build step: what is in the repo is what the browser gets.
 
 ```
-index.html    the entire site
-assets/       the resume PDF (the only thing the page links out to)
-tools/        authoring scripts + the headshot they read, never run to serve the site
+index.html    the entire site (~68 KB, ~26 KB over the wire)
+assets/       the resume PDF
+tools/        authoring scripts, the headshot they read, and the verifier
+              (tools/out/ is generated and gitignored)
+README.md     this file
+CLAUDE.md     notes for working in the repo
 ```
 
 ## Running it
@@ -17,6 +20,19 @@ Open `index.html`. It works from `file://` as well as over HTTP:
 ```sh
 python3 -m http.server
 ```
+
+## Checking a change
+
+```sh
+node tools/verify.mjs          # all checks; exits non-zero on failure
+node tools/verify.mjs --list   # what it checks
+node tools/verify.mjs grid     # just one
+```
+
+It needs Node 18+ and `google-chrome` on PATH, and nothing else — it starts its
+own static server and headless browser and writes no files. Every check in it
+corresponds to a bug this page has actually had. It is a regression harness, not
+a proof of correctness; still look at the page.
 
 ## Deploying
 
@@ -32,46 +48,92 @@ generated, and both have a script that reproduces them:
 python3 -m venv tools/.venv && tools/.venv/bin/pip install fonttools brotli pillow
 
 tools/make-font-subset.sh                  # -> tools/out/glyphs.woff2.b64
-tools/.venv/bin/python tools/make-portrait.py --cols 44 --contrast 2.0
-toilet -f mono12 JASON; toilet -f mono12 GRILLER
+tools/.venv/bin/python tools/make-portrait.py   # -> tools/out/portrait.txt
 ```
 
-Paste the output into the `@font-face` `src`, the `.art--port` `<pre>`, and the
-`.art--name` `<pre>` respectively.
+Paste those into the `@font-face` `src` and the `.art--port` `<pre>`. The script
+defaults are the values the committed art was rendered at, so running them bare
+reproduces what is already there.
+
+The name art is `toilet` with the `mono12` figlet font — a **system** package,
+not part of the venv above. Three steps sit between the command and the `<pre>`,
+and the trim is not optional: `toilet` indents every line by one space, so
+skipping it leaves 70-column art against a divisor sized for 69.
+
+```sh
+toilet -f mono12 JASON   >  tools/out/name.txt   # stack the two words into ONE
+toilet -f mono12 GRILLER >> tools/out/name.txt   # block, JASON above GRILLER
+
+grep '[^ ]' tools/out/name.txt | cut -c2- | sed 's/ *$//'
+#    ^ drop the pad lines       ^ trim the  ^ and the ragged trailing space.
+#      (they are spaces, not      leading     `grep .` does NOT work: those
+#      empty, so test for a       column      lines are full of spaces
+#      non-space)
+```
+
+That pipeline reproduces the committed art byte for byte.
+
+## Runtime dependencies
+
+There is no build step and no framework, but the page is not self-contained.
+JetBrains Mono is fetched from Google Fonts by a render-blocking stylesheet, and
+it is the first family in `--font`. Offline, body text falls back to a system
+mono whose advance is not 0.6em (Consolas is 0.5498em), and the `1ch = 9px`
+assumption the horizontal grid rests on quietly stops holding. The art is
+immune — see below.
 
 ## Why a font is embedded
 
 JetBrains Mono contains **no braille** (U+2800–28FF) and **no block elements**
 (U+2580–259F) — not in any build, including the Nerd Font patched ones
 ([JetBrainsMono#630](https://github.com/JetBrains/JetBrainsMono/issues/630)) —
-and Google Fonts serves neither. The spinners and the ASCII name are made
-entirely of those glyphs.
+and Google Fonts serves neither. The spinners, the portrait, the ASCII name, the
+corner ornaments, the block cursor and every log marker are made of glyphs it
+does not have.
 
 Without the subset the browser picks a per-glyph fallback at a different advance
 width — DejaVu Sans is +22%, Noto Sans Mono CJK is +100% — which shears the
 ASCII art apart and sizes the spinner grid differently on every OS.
 
-So `index.html` embeds ~2.9 KB of [Adwaita Mono](https://gitlab.gnome.org/GNOME/adwaita-fonts)
-(SIL OFL 1.1), subset to just the ranges it needs. Its advance is 600/1000em,
-identical to JetBrains Mono, so no `size-adjust` is required. It is declared
-under its own family name (`Terminal Glyphs`) rather than as JetBrains Mono, so
-the OFL Reserved Font Name clause is not engaged.
+So `index.html` embeds a [Adwaita Mono](https://gitlab.gnome.org/GNOME/adwaita-fonts)
+subset (SIL OFL 1.1) — 2.9 KB of WOFF2, 3.8 KB once base64'd — covering exactly:
 
-Verified: 20 `M`, 20 `⣿`, 20 `█` and 20 spaces all measure exactly 1200.0px at
-`font-size: 100px`.
+```
+U+0020        space, because the name art is spaces + block glyphs and a space
+              resolving from a different family would shear it
+U+2192        → log prefix
+U+2500-259F   box drawing + block elements: rules, name art, block cursor
+U+25B2        ▲ warn prefix (Adwaita has no U+26A0)
+U+2713        ✓ log prefix
+U+2800-28FF   braille: spinners, portrait, corner ornaments
+```
+
+Its advance is 600/1000em, identical to JetBrains Mono, so no `size-adjust` is
+required. It is declared under its own family name (`Terminal Glyphs`) rather
+than as JetBrains Mono, so the OFL Reserved Font Name clause is not engaged.
+
+There are two font stacks, and the difference is deliberate: `--font` starts with
+JetBrains Mono, `--font-art` **does not name it at all**, so art always resolves
+from the subset first. A new art block that reaches for `--font` will shear.
+
+`node tools/verify.mjs font` measures this in a real browser: every glyph in the
+subset must come out the same width as the body font's.
 
 ## The layout system
 
 A terminal has exactly two units: **one column and one row**. The reference this
 is modelled on puts every line on a 28px pitch and makes every gap an integer
-number of those rows — nothing is `1.65 ×` anything. So:
+number of those rows — nothing is `1.65 ×` anything. This page keeps the system
+and picks its own pitch, 24px:
 
 - **`line-height` is a length, not a ratio.** `line-height: var(--row)` on `body`
   inherits as a computed 24px, so a heading, a bullet and a wrapped paragraph all
   occupy exactly one row. This one declaration is the whole vertical rhythm.
-- **There is one font-size.** That makes `1ch` the same 9px page-wide, so the 2ch
-  log indent, the 6ch spinner box, the 2ch card padding and the 22ch nav column
-  all land on one character grid.
+- **There is one text size.** `--fs` is the only font-size any text uses, which
+  makes `1ch` the same 9px page-wide, so the 2ch log indent, the 6ch spinner box,
+  the 2ch card padding and the 22ch nav column all land on one character grid.
+  The other `font-size` declarations in the file are on the two art `<pre>`
+  blocks, where size is a function of container width rather than of hierarchy.
 - **Hierarchy is weight and brightness, not size** — which is ANSI's own system.
 - **One rail.** Every block uses `.wrap` and nothing else, so there is exactly one
   left edge. If you add a section, give it `.wrap`.
@@ -89,6 +151,15 @@ The mode is a class on `<html>`, and `?mode=tui` is a shareable link.
   doesn't exist yet at that point, and a class applied after first paint means a
   `?mode=tui` visitor watches stdout render and then snap. Moving this to the
   end-of-body script reintroduces that flash.
+- **Resolution order is: URL parameter, then `localStorage`, then `stdout`.**
+  `?mode=` accepts `tui` and `stdout`, case-insensitively; anything else is
+  ignored rather than treated as an error.
+- **The mode is persisted on load, not just on click.** So *opening* a shared
+  `?mode=tui` link switches that visitor to tui permanently, which is the point —
+  without it, someone who follows the link and never touches the toggle is back
+  in stdout next visit. It is sticky and user-visible; change it deliberately.
+  The URL is not rewritten on load, or every plain visit would grow a
+  `?mode=stdout`.
 - **Scoping policy.** A new *unscoped* rule is allowed only if every selector
   targets markup that did not exist before the feature. Anything touching
   pre-existing markup must be `.tui`-prefixed. That is what makes "if stdout
@@ -119,6 +190,10 @@ The mode is a class on `<html>`, and `?mode=tui` is a shareable link.
 - **Don't use `ch` on anything in `--font-art`.** `ch` is the advance of `0` in
   the first available font, and that is `Terminal Glyphs`, which has no digits —
   a case the spec resolves as 0.5em. Use `0.6em`, the subset's real advance.
+  The one exception is `probeGlyphs()`, which measures `1ch` precisely *because*
+  it only runs when the subset failed to load: there, resolving from the next
+  family is the whole point, and `0.6em` would assume metrics that by definition
+  are not there.
 - **Spinner frames must close.** Frames are precomputed and indexed `% f`, so a
   predicate whose natural period isn't exactly `f` visibly jumps at the wrap.
   Sinusoidal ones advance phase by exactly `2π/f`. A frame must also never be
@@ -137,6 +212,12 @@ The mode is a class on `<html>`, and `?mode=tui` is a shareable link.
   has a non-zero box is not the same check.
 - **`gap: 1ch` also sets a 9px *row* gap.** On anything that wraps, that puts
   everything below it off the 24px grid. Use `gap: var(--row) 1ch`.
+
+## Known unfinished
+
+The six project links are placeholders pointing at the GitHub profile rather than
+at each repo. In `tui` they are full-width targets, so they are the most clickable
+thing on the page. They are marked `TODO` in `index.html`.
 
 ## Licence
 
