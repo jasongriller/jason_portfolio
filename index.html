@@ -236,6 +236,13 @@ body.ready .boot li{animation:fade .28s ease-out forwards;animation-delay:calc(v
   line-height:1;
   color:var(--fg);
 }
+/* The workspace scene shares the portrait's cell geometry -- 44 columns wide and
+   the 1.2 line-height that is the only value making braille dots square. Only its
+   size ladder differs, further down, because it is 15 rows rather than 25. */
+/* --fg, not the portrait's --fg-dim. The portrait is a dithered photograph: it
+   has thousands of dots and dimming it stops it shouting. The scene is line art
+   with maybe a tenth as many dots, and at --fg-dim it reads as a ghost. */
+.art--scene pre{line-height:1.2;color:var(--fg)}
 /* portrait: 44 cols -> 44 * 0.6 = 26.4 */
 .art--port pre{
   font-size:clamp(5px,1.25vw,11px);
@@ -317,7 +324,6 @@ body.ready .boot li{animation:fade .28s ease-out forwards;animation-delay:calc(v
   width:fit-content;max-width:100%;
   padding:var(--row) 2ch;margin-block:var(--row);
 }
-.card-head{margin:0 0 var(--row);color:var(--fg-dim)}
 .card-foot{margin:var(--row) 0 0;padding-left:2ch;text-indent:-2ch;color:var(--fg-dim)}
 /* The bracket is 2 cells wide and the padding is 2ch, so the bracket exactly
    fills the indent: content starts at column 2, brackets occupy columns 0-1 —
@@ -567,33 +573,37 @@ body.ready .boot li{animation:fade .28s ease-out forwards;animation-delay:calc(v
    --font-art rule already warns about, one level up. */
 @media (min-width:56rem){
   .tui .hero{
-    grid-template-columns:calc(44 * 0.6 * 16px) minmax(0,1fr);
+    grid-template-columns:calc(36 * 0.6 * 20px) minmax(0,1fr);
     /* NOT the inherited `center`: centring slides the portrait against the table
        and destroys the line-for-line alignment that is the entire point. */
     align-items:start;
   }
 }
-.tui .art--port{display:block;order:-1}
-/* Fixed sizes, not the container query the hero uses, and every one a multiple of
-   0.8px -- because 25 rows x 1.2 x size is a whole number of 24px rows only then.
-   16px -> 422x480 = 20 rows.  12.8px -> 338x384 = 16 rows, and 338 still fits the
-   358px content box of a 390px phone.  10.4px -> 274x312 = 13 rows, fitting the
-   288px box at 320px. Specificity here is (0,2,1) against the (0,1,1) cap rule
-   above, so this wins regardless of source order -- but it is placed after it
-   anyway, because that pair has already been read the wrong way twice.
-
-   16px and not the 20px the two-column read mode allows: braille art is a fixed
-   dot count, so scaling it up spreads the same dots over more area and the face
-   reads paler and sparser, not bigger. 16px also leaves the summary column 50
-   characters instead of 38, which is the difference between four wrapped rows
-   and none. */
-/* The size ladder and the one-column/two-column split are separate decisions:
-   40rem is simply where a 422px portrait fits the content box, while the split
-   waits for 56rem, where the summary column is still wide enough not to wrap
-   every value. */
-.tui .art--port pre{font-size:12.8px}                              /* 338x384 = 16 rows */
-@media (min-width:40rem){ .tui .art--port pre{font-size:16px} }    /* 422x480 = 20 rows */
-@media (max-width:23rem){ .tui .art--port pre{font-size:9.6px} }   /* 253x288 = 12 rows */
+/* Browse mode swaps WHICH art block is shown: the portrait goes back to hidden
+   and the workspace scene takes the left track. A swap, not a second copy -- both
+   elements exist exactly once and only one is ever displayed, which is what
+   `node tools/verify.mjs fetch` asserts. */
+.art--scene{display:none}
+.tui .art--port{display:none}
+.tui .art--scene{display:block;order:-1}
+/* Fixed sizes, not the container query the hero uses. The scene is 15 rows, and
+   height is rows x 1.2 x size, so 18 x size must be a multiple of the 24px row --
+   every step is a multiple of 4/3. (The portrait's old ladder was multiples of
+   0.8 for the same reason at 25 rows.)
+     20px     -> 432x360 = 15 rows
+     13.333px -> 288x240 = 10 rows, and 288 fits the 358px box of a 390px phone
+      9.333px -> 202x168 =  7 rows, fitting the 288px box at 320px
+   360px against the portrait's 480px is the point of the change: the graphic
+   stopped being the loudest thing on the page. The scene is 36 columns rather
+   than the portrait's 44 because a font draws braille dots small relative to
+   their spacing -- at 44 columns the art was geometrically correct and still
+   read as a faint dotted ghost. Same physical width, 25% bigger dots.
+   The size ladder and the one-column/two-column split stay separate decisions --
+   40rem is where a 422px block fits the content box, while the split waits for
+   56rem, where the summary column is still wide enough not to wrap every value. */
+.tui .art--scene pre{font-size:13.333px}                           /* 288x240 = 10 rows */
+@media (min-width:40rem){ .tui .art--scene pre{font-size:20px} }   /* 432x360 = 15 rows */
+@media (max-width:23rem){ .tui .art--scene pre{font-size:9.333px} }/* 202x168 =  7 rows */
 /* The tagline is voice, not a table row -- without this it reads as one more
    key-less entry glued to `resume`. */
 .tui .tagline{margin-top:var(--row)}
@@ -789,17 +799,8 @@ body.ready .boot li{animation:fade .28s ease-out forwards;animation-delay:calc(v
         <dt>role</dt><dd>Software Engineer</dd>
         <dt>based</dt><dd>Orlando, Florida</dd>
         <dt>email</dt><dd><a href="mailto:jgriller1@gmail.com">jgriller1@gmail.com</a></dd>
-        <dt>focus</dt><dd>AI, productivity, personal growth</dd>
-        <dt>work</dt><dd>data analyst intern · james moore &amp; co. · 2023</dd>
-        <dt>school</dt><dd>B.S. Computer Science · UCF · 2022&#8211;2024<br>Associate in Arts · Valencia College</dd>
-        <dt>building</dt><dd>LikeMinds &#8212; AI goal and meetup app<br>homelab &#8212; self-hosted, repurposed laptops</dd>
-        <dt>lang</dt><dd>C/C++ · Java · Python · C# · SQL · R</dd>
-        <dt>web</dt><dd>React · Next.js · TypeScript · Tailwind CSS</dd>
-        <dt>server</dt><dd>Node.js · Firebase · MongoDB · MySQL</dd>
-        <dt>tools</dt><dd>Git · Docker · AWS · Jira</dd>
-        <dt>projects</dt><dd>6</dd>
-        <dt>skills</dt><dd>21</dd>
-        <dt>resume</dt><dd><a href="assets/jason_griller_resume_se.pdf" type="application/pdf">jason_griller_resume_se.pdf</a> · sep 2024</dd>
+        <dt>now</dt><dd>LikeMinds &#8212; AI goal and meetup app</dd>
+        <dt>now</dt><dd>homelab &#8212; self-hosted, repurposed laptops</dd>
       </dl>
       <p class="meta">Orlando, Florida · <a href="mailto:jgriller1@gmail.com">jgriller1@gmail.com</a></p>
       <p class="tagline"># i like figuring out how to make cool tech work for me</p>
@@ -840,6 +841,29 @@ body.ready .boot li{animation:fade .28s ease-out forwards;animation-delay:calc(v
 ⣿⣿⣿⣿⣽⣾⣻⣳⢯⣳⢕⢯⡧⣓⢗⡵⣗⣦⠀⠀⠀⠈⡈⡂⢅⢢⢪⣳⢯⣯⣗⣿⣿⣾⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
 ⣿⣿⣽⣿⣽⣯⣿⣾⢿⣽⣳⣕⢿⡔⢕⣝⢮⠃⣬⡢⡄⡢⡢⡣⣣⡳⣽⣺⢿⣽⡞⢿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
 ⣿⣿⣷⣿⣿⣿⣿⣾⣿⣿⣿⢾⣝⣿⣔⢸⢹⠐⡌⡕⣝⣾⣾⣽⣾⣿⣷⣿⣿⡯⢂⣼⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿</pre>
+    </div>
+
+    <!-- Browse mode's graphic. Purely decorative, hence aria-hidden and no
+         role="img": there is nothing here a screen reader needs. The portrait
+         above keeps its role and label and is what read mode shows.
+         Exactly one of the two is visible in each mode -- never both, never
+         neither, which tools/verify.mjs asserts. -->
+    <div class="art art--scene" aria-hidden="true">
+<pre>⠀⠀⠀⠀⠐⢦⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠹⡄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⡶⢤⣀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⢀⣀⣲⣟⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣼⡟⠲⢍⡛⠦⣄⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⢠⣞⣭⠿⠿⠬⣿⢲⠀⠀⠀⠀⠀⠀⠀⠀⢰⡿⠀⠰⣄⡈⠓⠬⣙⠲⢤⣀⠀⠀⠀⠀⠀⠀
+⠀⠀⠈⣿⣤⣄⣀⣤⣼⡟⠀⠀⠀⠀⠀⠀⠀⢀⣿⠋⠓⠦⣄⠉⠓⢦⠈⠙⠢⢍⡓⠦⣄⠀⠀⠀
+⠀⠀⠀⣿⠀⠉⠉⠁⢰⡇⠀⠀⠀⠀⠀⠀⠀⣾⣏⠀⠲⢤⣈⠁⠀⠀⠀⠀⠀⠀⠉⣶⡟⠀⠀⠀
+⠀⠀⠀⢹⠀⠀⠀⠀⢸⡇⠀⠀⠀⠀⠀⠀⣸⣿⡈⠙⠶⡄⠈⠛⠦⣄⡀⠀⠀⠀⢰⣿⠁⠀⠀⠀
+⠀⠀⠀⢸⣇⡤⠤⢤⣸⠀⠀⠀⠀⠀⠀⢠⡿⢇⡉⠓⢦⣀⠀⠀⠀⠈⠁⠀⠀⢀⣿⠃⠀⠀⠀⠀
+⠀⠀⠀⠈⠧⣄⣀⣠⠟⠀⠀⠀⣀⡤⠞⣋⠛⢷⣮⣓⠤⣈⠁⠀⠀⠀⠀⠀⠀⣼⡏⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⢀⣠⠴⠛⠡⢔⡫⣖⣵⣢⢌⡙⠻⣶⣕⡢⢄⡀⠀⠀⢰⡿⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⢠⣶⣏⡁⠀⠀⠀⣀⣈⠑⠯⣚⢵⡫⣖⠤⣉⠛⢷⣭⣒⠤⣿⠁⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠉⠛⢿⣷⣤⣚⢥⡀⠙⠢⢄⡉⠺⢕⡯⣞⢵⡢⠌⣙⣿⡇⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⠙⠻⣷⣮⣕⡢⠚⠁⠀⠀⠈⢑⣩⣴⡿⠟⠋⠁⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠉⠻⢿⣶⣤⣀⣤⣾⡿⠛⠉⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⠙⠟⠋⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀</pre>
     </div>
   </div>
 
@@ -1020,7 +1044,6 @@ body.ready .boot li{animation:fade .28s ease-out forwards;animation-delay:calc(v
       <span class="corner tl" aria-hidden="true">⠋⠉</span>
       <span class="corner tr" aria-hidden="true">⠉⠙</span>
 
-      <p class="card-head">languages/&nbsp;&nbsp; tools/&nbsp;&nbsp; frontend/&nbsp;&nbsp; backend/</p>
       <ul class="skills">
         <li class="skill"><span data-spinner="fillsweep" aria-hidden="true">⠿</span>C/C++</li>
         <li class="skill"><span data-spinner="orbit" aria-hidden="true">⠿</span>Java</li>

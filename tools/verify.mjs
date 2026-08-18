@@ -464,20 +464,23 @@ check('hero', 'both hero art blocks resolve to the same cell size and fill their
 
 
 /* --- the browse-mode fetch lockup ---------------------------------------- */
-check('fetch', 'the portrait and the summary card line up as one block',
+check('fetch', 'the scene and the summary card line up, and only one art block shows',
   async ({ page, origin, fail }) => {
-    /* The lockup only reads as one object if the portrait's lines sit on the same
-       baselines as the table beside it. That works because 25 cells at
-       line-height 1.2 x 16px is exactly 25 x 24px -- a coincidence worth pinning,
-       because any font-size that is not a multiple of 0.8px silently breaks it. */
+    /* The lockup only reads as one object if the scene's lines sit on the same
+       baselines as the table beside it. The scene is 15 rows, so height is
+       18 x font-size and lands on the 24px grid only when the size is a multiple
+       of 4/3. Also asserted here: exactly ONE art block is visible per mode --
+       the portrait in read, the scene in browse, never both and never neither. */
     for (const w of [390, 820, 896, 1088, 1440, 1920]) {
       await page.setWidth(w);
       await page.goto(`${origin}/?mode=tui`);
       const f = await page.eval(`${HELPERS}
         (() => {
-          const pre = document.querySelector('.art--port pre');
+          const pre = document.querySelector('.art--scene pre');
           const dl  = document.querySelector('.fetch');
-          if (!pre || !dl) return null;
+          const port = document.querySelector('.art--port');
+          const scene = document.querySelector('.art--scene');
+          if (!pre || !dl || !port || !scene) return null;
           const cs = getComputedStyle(pre);
           const pr = pre.getBoundingClientRect(), dr = dl.getBoundingClientRect();
           const dt = dl.querySelector('dt');
@@ -489,28 +492,31 @@ check('fetch', 'the portrait and the summary card line up as one block',
                inside a template literal, where the escape resolves before the page
                ever sees it and leaves an unterminated regex. */
             lines: pre.textContent.trimEnd().split(String.fromCharCode(10)).length,
+            portShown: __vis(port), sceneShown: __vis(scene),
             sideBySide: Math.abs(pr.top - dr.top) < 2 && pr.right <= dr.left + 1,
             portTop: Math.round(pr.top * 100) / 100,
             rowTop: dt ? Math.round(dt.getBoundingClientRect().top * 100) / 100 : null,
             overlap: Math.round((pr.right - dr.left) * 100) / 100,
           };
         })()`);
-      if (!f) { fail(`@${w}px: the portrait or the summary card is missing in browse mode`); continue; }
-      if (!f.visible) { fail(`@${w}px: browse mode is hiding the portrait or the summary card`); continue; }
-      if (f.lines !== 25) fail(`@${w}px: portrait is ${f.lines} lines, expected 25 - the size ladder assumes it`);
-      /* font-size must be a multiple of 0.8px so 25 x 1.2 x size is whole rows */
-      if (Math.abs(f.fontSize / 0.8 - Math.round(f.fontSize / 0.8)) > 0.001) {
-        fail(`@${w}px: portrait font-size is ${f.fontSize}px, not a multiple of 0.8px - its height cannot be whole rows`);
+      if (!f) { fail(`@${w}px: the scene or the summary card is missing in browse mode`); continue; }
+      if (!f.visible) { fail(`@${w}px: browse mode is hiding the scene or the summary card`); continue; }
+      if (f.portShown) fail(`@${w}px: the portrait is showing in browse mode - the two art blocks must swap, not stack`);
+      if (!f.sceneShown) fail(`@${w}px: the scene is hidden in browse mode`);
+      if (f.lines !== 15) fail(`@${w}px: scene is ${f.lines} lines, expected 15 - the size ladder assumes it`);
+      /* multiple of 4/3, so 15 rows x 1.2 x size is a whole number of 24px rows */
+      if (Math.abs(f.fontSize * 3 / 4 - Math.round(f.fontSize * 3 / 4)) > 0.001) {
+        fail(`@${w}px: scene font-size is ${f.fontSize}px, not a multiple of 4/3px - its height cannot be whole rows`);
       }
       if (Math.abs(f.lineHeight - f.fontSize * 1.2) > 0.1) {
-        fail(`@${w}px: portrait line-height is ${f.lineHeight}px, not 1.2 x ${f.fontSize}px - braille dots stop being square`);
+        fail(`@${w}px: scene line-height is ${f.lineHeight}px, not 1.2 x ${f.fontSize}px - braille dots stop being square`);
       }
       /* Only meaningful side by side; stacked, the two share a column on purpose. */
-      if (f.sideBySide && f.overlap > 1) fail(`@${w}px: the portrait overlaps the summary card by ${f.overlap}px`);
+      if (f.sideBySide && f.overlap > 1) fail(`@${w}px: the scene overlaps the summary card by ${f.overlap}px`);
       /* Above the split, the two must start on the same line, not be centred
          against each other -- align-items:center is the failure mode here. */
       if (w >= 896 && !f.sideBySide) {
-        fail(`@${w}px: portrait and summary card are not aligned side by side (top ${f.portTop} vs row ${f.rowTop})`);
+        fail(`@${w}px: scene and summary card are not aligned side by side (top ${f.portTop} vs row ${f.rowTop})`);
       }
     }
   });
@@ -534,7 +540,7 @@ check('grid', 'tui controls stay on the 24px row grid when they wrap',
              inherited line box -- and a change to any one of them drifts
              everything below it. */
           const boxes = [];
-          for (const sel of ['.title', '.btn', '#projects .entry-head', '.trow', '.art--port pre']) {
+          for (const sel of ['.title', '.btn', '#projects .entry-head', '.trow', '.art--scene pre']) {
             for (const el of document.querySelectorAll(sel)) {
               if (!__vis(el)) continue;
               boxes.push({ sel, h: Math.round(el.getBoundingClientRect().height * 100) / 100 });

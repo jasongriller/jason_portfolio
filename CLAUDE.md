@@ -77,7 +77,13 @@ write to the gitignored `tools/out/`:
 python3 -m venv tools/.venv && tools/.venv/bin/pip install fonttools brotli pillow
 tools/make-font-subset.sh
 tools/.venv/bin/python tools/make-portrait.py
+tools/.venv/bin/python tools/make-scene.py
 ```
+
+`make-scene.py` draws browse mode's graphic from primitives rather than tracing an
+image, and thresholds instead of dithering — dithering is right for a photograph
+and turns line art into noise. It writes a `scene.png` preview; use it, because
+braille line art cannot be judged from the characters.
 
 The portrait's column count and the CSS `cqi` divisor are one number in two
 places: `100cqi / 26.4` is 44 columns × 0.6em. Re-render at a different width and
@@ -90,7 +96,13 @@ it is not just the `toilet` command.
 - **Don't add a build step, a dependency, or a framework.** The constraint is the
   point. `tools/verify.mjs` is deliberately zero-dependency for the same reason.
 - **Don't duplicate DOM for the second display mode.** One DOM, two
-  presentations — browse mode re-places the portrait with `order`, never a clone. Beyond the maintenance cost, the spinner engine calls
+  presentations. The two modes show different art blocks, but they *swap* — one is
+  hidden while the other shows — never a clone of one element.
+- **Don't restate below-the-fold content in the browse summary card.** It was
+  fourteen rows once, and an audit found **zero** of them unique: 79% of its
+  characters repeated text further down the page, and one fact appeared three
+  times. It is five rows now. Anything added to it should be something a visitor
+  cannot read one scroll later. Beyond the maintenance cost, the spinner engine calls
   `querySelectorAll('[data-spinner]')` exactly once at load, so a spinner added
   to a second copy of a section is inert — a bug that looks like a CSS problem.
 - **Don't add an unscoped CSS rule that touches pre-existing markup.** New rules

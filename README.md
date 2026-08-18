@@ -5,7 +5,7 @@ A single-page resume site with a terminal aesthetic. Everything is in
 framework and no build step: what is in the repo is what the browser gets.
 
 ```
-index.html    the entire site (~68 KB, ~26 KB over the wire)
+index.html    the entire site (~81 KB, ~30 KB over the wire)
 assets/       the resume PDF
 tools/        authoring scripts, the headshot they read, and the verifier
               (tools/out/ is generated and gitignored)
@@ -47,9 +47,15 @@ generated, and both have a script that reproduces them:
 ```sh
 python3 -m venv tools/.venv && tools/.venv/bin/pip install fonttools brotli pillow
 
-tools/make-font-subset.sh                  # -> tools/out/glyphs.woff2.b64
+tools/make-font-subset.sh                       # -> tools/out/glyphs.woff2.b64
 tools/.venv/bin/python tools/make-portrait.py   # -> tools/out/portrait.txt
+tools/.venv/bin/python tools/make-scene.py      # -> tools/out/scene.txt + .png
 ```
+
+`make-scene.py` draws browse mode's workspace graphic from primitives — there is no
+source image, so nothing to license. It also writes `scene.png`, a preview that
+renders the dot grid the way a terminal does, because judging braille line art from
+the raw characters is hopeless.
 
 Paste those into the `@font-face` `src` and the `.art--port` `<pre>`. The script
 defaults are the values the committed art was rendered at, so running them bare
@@ -191,10 +197,12 @@ The mode is a class on `<html>`, and `?mode=tui` is a shareable link.
   for assistive tech; CSS keys off `.tui` / `.stdout`.
 - **The toggle bar must stay a whole number of rows** (currently 3), or every
   element below it lands off the 24px grid.
-- **browse mode re-places the portrait; it never copies it.** `.tui .art--port`
-  is `order:-1` on the existing element, which is also the one carrying `role="img"`
-  and its `aria-label`. A second copy would be inert — the spinner engine scans
-  once at load.
+- **The two modes show different art, and exactly one block at a time.** Read mode
+  shows the braille portrait; browse mode hides it and shows `.art--scene`, an
+  isometric workspace drawing, in the same track. They swap — neither is ever a
+  copy of the other, and `verify.mjs fetch` fails if both or neither is visible.
+  The portrait keeps `role="img"` and its label; the scene is `aria-hidden`, since
+  there is nothing in it a screen reader needs.
 
 ## Things that will bite you
 
@@ -248,12 +256,19 @@ The mode is a class on `<html>`, and `?mode=tui` is a shareable link.
   paint in.** The default ring is `--accent`; inside an element whose background
   has flipped to `--accent` it is 1.00:1 and invisible. Checking that the element
   has a non-zero box is not the same check.
-- **The portrait's font-size must be a multiple of 0.8px.** It is 25 cells tall at
-  `line-height: 1.2`, so `25 × 1.2 × size` is a whole number of 24px rows only when
-  `size` is a multiple of 0.8 — 16px gives exactly 480px, 12.8px gives 384px. That
-  is what lets the summary card sit on the same baselines as the portrait beside
-  it. Rows align this way; **columns do not** — the portrait's cell is 12px wide
-  and `1ch` is 9px — so its grid track is sized in px, never `ch`.
+- **Art font-sizes are constrained by the row grid.** A block of `R` cells is
+  `R × 1.2 × size` tall, and that has to be a whole number of 24px rows — so the
+  size ladder depends on the row count. The scene is 15 rows, so its sizes are
+  multiples of **4/3** (20, 13.333, 9.333); the portrait is 25 rows, so multiples
+  of **0.8**. That is what lets the summary card sit on the same baselines as the
+  art beside it. Rows align this way; **columns do not** — the art cell is 12px
+  wide and `1ch` is 9px — so the grid track is sized in px, never `ch`.
+- **Braille dots render small relative to their spacing.** The scene was first
+  drawn at the portrait's 44 columns, was geometrically perfect, and read as a
+  faint dotted ghost on the page. It is 36 columns at a larger size instead: the
+  same physical width, 25% bigger dots. For line art, fewer and larger beats more
+  and smaller — and strokes must be **wider than one dot**, or a diagonal splits
+  its coverage across two dots and lights neither.
 - **A rule under a heading must be `box-shadow`, not `border-bottom`.** A border
   adds 1px of layout and drifts everything below it off the grid; a shadow paints
   for free. `verify.mjs grid` measures each heading's footprint including its
