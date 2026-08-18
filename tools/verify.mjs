@@ -722,6 +722,43 @@ check('stagger', 'no two instances of one spinner start on the same frame',
   });
 
 
+/* --- each fact has one home per mode ------------------------------------ */
+check('once', 'summaries that a mode restates elsewhere stay hidden in that mode',
+  async ({ page, origin, fail }) => {
+    /* The page carries the same summary twice by design and hides one copy per
+       mode: read mode has no card, so #about's `now` list is its only summary of
+       current work; browse mode has the card, so the list would be a second copy
+       one screen below it. Same contract as .meta, which the card also restates.
+       Getting this backwards is invisible in a screenshot and doubles the text. */
+    const PAIRS = [
+      { sel: '.now',   showIn: 'stdout', why: "#about's `now` list vs the card's `now` rows" },
+      { sel: '.meta',  showIn: 'stdout', why: '.meta vs the card\'s `based` and `email` rows' },
+      { sel: '.fetch', showIn: 'tui',    why: 'the summary card itself' },
+    ];
+    await page.setWidth(1440);
+    for (const mode of MODES) {
+      await page.goto(`${origin}/?mode=${mode}`);
+      const seen = await page.eval(`${HELPERS}
+        (() => {
+          const out = {};
+          for (const sel of ${JSON.stringify(PAIRS.map(p => p.sel))}) {
+            const el = document.querySelector(sel);
+            out[sel] = el ? __vis(el) : null;
+          }
+          return out;
+        })()`);
+      for (const p of PAIRS) {
+        if (seen[p.sel] === null) { fail(`${mode}: ${p.sel} is missing from the markup`); continue; }
+        const want = p.showIn === mode;
+        if (seen[p.sel] !== want) {
+          fail(`${mode}: ${p.sel} is ${seen[p.sel] ? 'visible' : 'hidden'} but should be ` +
+               `${want ? 'visible' : 'hidden'} - ${p.why}`);
+        }
+      }
+    }
+  });
+
+
 /* --- the page without JavaScript ---------------------------------------- */
 check('nojs', 'content renders and the toggle stays hidden with scripts off',
   async ({ cdp, origin, fail }) => {

@@ -68,6 +68,19 @@ because the source is thin. Leave it thin or ask.
 
 The phone number is in the PDF and must **not** appear on the page.
 
+**The rule catches things late if nobody checks.** A GPA on both education entries
+and an entire second institution shipped and survived several reviews before an
+audit against the PDF found that none of it was in there; all of it is now gone.
+When you touch content, diff it against the PDF, not against what the page already
+says.
+
+**The PDF is also the source for *structure*, not only for facts.** Its
+`TECHNICAL SKILLS` block is four labelled groups — Languages / Tools / Frontend /
+Backend — and the skills card reproduces them, in that order, because that grouping
+is a claim about what he does. Those labels were once deleted as decoration; they
+are not. Same for `EDUCATION`'s `Relevant Coursework` and `Extracurriculars`, which
+the page renders as `coursework/` and `activities/`.
+
 ## Regenerating the two embedded blobs
 
 Both have a script, both scripts default to exactly what is committed, and both
@@ -98,6 +111,12 @@ it is not just the `toilet` command.
 - **Don't duplicate DOM for the second display mode.** One DOM, two
   presentations. The two modes show different art blocks, but they *swap* — one is
   hidden while the other shows — never a clone of one element.
+- **Don't state a fact twice in one mode.** The two modes deliberately carry two
+  copies of some summaries and hide one per mode — `.meta` and `#about`'s `.now`
+  list are hidden in browse because the card restates them; the card is hidden in
+  read. `node tools/verify.mjs once` asserts each pair. Before adding a line, grep
+  the rendered text: at the last audit, LikeMinds and homelab were each stated four
+  times in browse mode, twice inside `#about` alone.
 - **Don't restate below-the-fold content in the browse summary card.** It was
   fourteen rows once, and an audit found **zero** of them unique: 79% of its
   characters repeated text further down the page, and one fact appeared three

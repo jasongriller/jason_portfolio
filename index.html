@@ -337,12 +337,24 @@ body.ready .boot li{animation:fade .28s ease-out forwards;animation-delay:calc(v
 .corner.bl{bottom:0;left:0}
 .corner.br{bottom:0;right:0}
 
+/* One row per group: a fixed-width key, then the items flowing and wrapping in
+   the space left. row-gap is 0 on purpose -- the 24px line box already IS the row,
+   so a wrapped item line lands exactly one row down and nothing drifts off grid.
+   (This is the `gap:1ch` trap the README records, stated the other way round.) */
+.skillrow{display:flex;gap:1ch;align-items:baseline}
+.skillkey{flex:none;width:12ch;margin:0;color:var(--fg-dim)}
 .skills{
-  display:grid;
-  grid-template-columns:minmax(0,1fr);
-  column-gap:6ch;
-  row-gap:0;                 /* the 24px row IS the gap — reference pitch is 1 row */
-  justify-content:start;     /* pack left: no dead space */
+  display:flex;flex-wrap:wrap;
+  gap:0 3ch;
+  margin:0;min-width:0;
+}
+/* A 12ch key plus the widest item ("Tailwind CSS" with its 6-cell spinner) needs
+   288px, which is exactly the content box of a 320px phone. Stack instead, at the
+   same 24.5rem breakpoint .contact already uses for the same reason. */
+@media (max-width:24.5rem){
+  .skillrow{display:block}
+  .skillkey{width:auto}
+  .skills{padding-left:2ch}
 }
 /* The two hero blocks share a cap above 49rem, and must. Their tracks are 69fr and
    44fr against 69 and 44 columns, so both resolve to the SAME font-size -- that is
@@ -363,9 +375,6 @@ body.ready .boot li{animation:fade .28s ease-out forwards;animation-delay:calc(v
    (auto-fit cannot be used here at all — auto-repeat rejects intrinsic sizes,
    which is why the old rule fell back to 1fr and left ~45% of each column
    empty.) */
-@media (min-width:32rem){ .skills{grid-template-columns:repeat(2,minmax(0,max-content))} }
-@media (min-width:46rem){ .skills{grid-template-columns:repeat(3,minmax(0,max-content))} }
-@media (min-width:58rem){ .skills{grid-template-columns:repeat(4,minmax(0,max-content))} }
 .skill{display:flex;align-items:baseline;gap:1ch;min-width:0;color:var(--fg)}
 .skill [data-spinner]{flex:none}
 
@@ -547,6 +556,11 @@ body.ready .boot li{animation:fade .28s ease-out forwards;animation-delay:calc(v
 }
 /* Restated as `based` and `email` rows in the card. */
 .tui .meta{display:none}
+/* Same reason: the card's two `now` rows say exactly this, one screen above. In
+   read mode there is no card, so these lines are the only summary of current work
+   and they stay. Each fact then lands twice per mode -- summary, then the full
+   entry in #projects -- instead of four times. */
+.tui .now{display:none}
 
 .fetch{display:none}
 .tui .fetch{
@@ -651,7 +665,18 @@ body.ready .boot li{animation:fade .28s ease-out forwards;animation-delay:calc(v
   border:1px solid var(--fg-dim);
 }
 .tui .cmdindex .navlabel{display:inline;color:var(--fg)}
-.tui .cmdindex .d{display:none}
+/* NOT hidden. `.d` is the plain-English gloss -- "work history", "things i've
+   built" -- and browse mode exists for exactly the visitor who wants it. Hiding it
+   here showed the explanation to the reader who did not need it and withheld it
+   from the one it was written for. */
+.tui .cmdindex .d{display:inline;color:var(--fg-dim)}
+/* The gloss follows the label. In the DOM `.d` comes first, because read mode
+   lays the row out as `$ command | gloss`; in browse the chip has to read
+   "projects - things i've built", so the two swap with flex order. Without this
+   the chip renders as "things i've builtprojects". */
+.tui .cmdindex .navlabel{order:1}
+.tui .cmdindex .d{order:2;margin-left:1ch}
+.tui .cmdindex .d::before{content:'· '}
 .tui .cmdindex a:hover,.tui .cmdindex a:focus-visible{
   background:var(--accent);border-color:var(--accent);
 }
@@ -760,7 +785,7 @@ body.ready .boot li{animation:fade .28s ease-out forwards;animation-delay:calc(v
     <p class="prompt"><span class="sig">$</span> <span id="typed">npx jason --resume</span><span class="cursor" id="bootcur" aria-hidden="true">▌</span></p>
     <ul class="log">
       <li style="--i:0"><span class="k k-ok" aria-hidden="true">✓</span>resolved <span class="dim">jasongriller@latest</span></li>
-      <li style="--i:1"><span class="k k-ok" aria-hidden="true">✓</span>fetched 1 package <span class="dim">· orlando, florida</span></li>
+      <li style="--i:1"><span class="k k-ok" aria-hidden="true">✓</span>fetched 1 package</li>
       <li style="--i:2"><span class="k k-ok" aria-hidden="true">✓</span>linked 21 skills, 6 projects, 1 role</li>
       <li style="--i:3"><span class="k k-warn" aria-hidden="true">▲</span><span class="vh">Note: </span>resume snapshot is from sep 2024 — see <a href="#projects">projects/</a> for current work</li>
       <li style="--i:4"><span class="k k-to" aria-hidden="true">→</span><span class="dim">ready in <span id="ms">—</span> ms</span></li>
@@ -796,7 +821,11 @@ body.ready .boot li{animation:fade .28s ease-out forwards;animation-delay:calc(v
            are deliberately no invented system stats: a neofetch pastiche is
            exactly where "uptime" and "kernel" would be easiest to fabricate. -->
       <dl class="fetch">
-        <dt>role</dt><dd>Software Engineer</dd>
+        <!-- No `role` row: the panel caption one line above already reads
+             "Jason Griller - Software Engineer". `grad` replaces it because the
+             page otherwise states the graduation date exactly once, three screens
+             down, so nothing above the fold places seniority at all. -->
+        <dt>grad</dt><dd>dec 2024 &#8212; B.S. Computer Science, UCF</dd>
         <dt>based</dt><dd>Orlando, Florida</dd>
         <dt>email</dt><dd><a href="mailto:jgriller1@gmail.com">jgriller1@gmail.com</a></dd>
         <dt>now</dt><dd>LikeMinds &#8212; AI goal and meetup app</dd>
@@ -888,10 +917,13 @@ body.ready .boot li{animation:fade .28s ease-out forwards;animation-delay:calc(v
       <span class="vh">About</span>
       <span class="run" data-spinner="braille" aria-hidden="true">⠋</span>
     </h2>
+    <!-- One sentence, and it is the only thing in this section stated nowhere else.
+         The second sentence used to name LikeMinds and homelab, which the two lines
+         directly below it then restated near-verbatim, and #projects restated again
+         in full. Three statements of two facts inside one screen. -->
     <p class="prose">I'm a software developer building tools at the intersection of AI,
-      productivity, and personal growth. Right now, I'm working on LikeMinds, an AI-powered
-      goal and meetup app, while running a self-hosted homelab built from repurposed laptops.</p>
-    <ul class="log">
+      productivity, and personal growth.</p>
+    <ul class="log now">
       <li><span class="k k-to" aria-hidden="true">→</span><span class="dim">now</span> &nbsp;LikeMinds — AI-powered goal and meetup app</li>
       <li><span class="k k-to" aria-hidden="true">→</span><span class="dim">now</span> &nbsp;homelab — self-hosted, built from repurposed laptops</li>
     </ul>
@@ -1019,18 +1051,13 @@ body.ready .boot li{animation:fade .28s ease-out forwards;animation-delay:calc(v
         <span class="entry-name">university of central florida</span>
         <span class="entry-tag">aug 2022 – dec 2024</span>
       </div>
-      <p class="stack">B.S. Computer Science · Orlando, FL · GPA 3.15 / 4.0</p>
+      <p class="stack">B.S. Computer Science · Orlando, FL</p>
       <p class="stack">coursework/</p>
       <p class="stack">computer science i &amp; ii · database systems · mobile device
         software dev. · security in computing · ai for game programming ·
         senior design i &amp; ii · robotics</p>
       <p class="stack">activities/</p>
       <p class="stack">ucf google developer club · knight hacks · ucf intramural basketball</p>
-    </div>
-
-    <div class="entry">
-      <div class="entry-head"><span class="entry-name">valencia college</span></div>
-      <p class="stack">Associate in Arts · GPA 3.51 / 4.0</p>
     </div>
   </section>
 
@@ -1044,29 +1071,54 @@ body.ready .boot li{animation:fade .28s ease-out forwards;animation-delay:calc(v
       <span class="corner tl" aria-hidden="true">⠋⠉</span>
       <span class="corner tr" aria-hidden="true">⠉⠙</span>
 
-      <ul class="skills">
-        <li class="skill"><span data-spinner="fillsweep" aria-hidden="true">⠿</span>C/C++</li>
-        <li class="skill"><span data-spinner="orbit" aria-hidden="true">⠿</span>Java</li>
-        <li class="skill"><span data-spinner="breathe" aria-hidden="true">⠿</span>Python</li>
-        <li class="skill"><span data-spinner="snake" aria-hidden="true">⠿</span>C#</li>
-        <li class="skill"><span data-spinner="pulse" aria-hidden="true">⠿</span>SQL</li>
-        <li class="skill"><span data-spinner="cascade" aria-hidden="true">⠿</span>R</li>
-        <li class="skill"><span data-spinner="columns" aria-hidden="true">⠿</span>Git</li>
-        <li class="skill"><span data-spinner="scanline" aria-hidden="true">⠿</span>GitHub</li>
-        <li class="skill"><span data-spinner="checkerboard" aria-hidden="true">⠿</span>Docker</li>
-        <li class="skill"><span data-spinner="rain" aria-hidden="true">⠿</span>AWS</li>
-        <li class="skill"><span data-spinner="sparkle" aria-hidden="true">⠿</span>Jira</li>
-        <li class="skill"><span data-spinner="waverows" aria-hidden="true">⠿</span>HTML</li>
-        <li class="skill"><span data-spinner="helix" aria-hidden="true">⠿</span>JavaScript</li>
-        <li class="skill"><span data-spinner="dna" aria-hidden="true">⠿</span>TypeScript</li>
-        <li class="skill"><span data-spinner="fillsweep" aria-hidden="true">⠿</span>React</li>
-        <li class="skill"><span data-spinner="checkerboard" aria-hidden="true">⠿</span>Next.js</li>
-        <li class="skill"><span data-spinner="orbit" aria-hidden="true">⠿</span>Tailwind CSS</li>
-        <li class="skill"><span data-spinner="breathe" aria-hidden="true">⠿</span>Node.js</li>
-        <li class="skill"><span data-spinner="snake" aria-hidden="true">⠿</span>Firebase</li>
-        <li class="skill"><span data-spinner="pulse" aria-hidden="true">⠿</span>MongoDB</li>
-        <li class="skill"><span data-spinner="cascade" aria-hidden="true">⠿</span>MySQL</li>
-      </ul>
+      <!-- Four groups, not one flat list of 21. The labels are the resume's own
+           TECHNICAL SKILLS headings and this markup order already matched them run
+           for run -- they were briefly deleted as "misleading column headers",
+           which mistook a broken association for a bad idea. The fix was to bind
+           each label to its group, not to throw the grouping away.
+           Label left, items flowing right: the resume's shape, and it costs four
+           rows where a stacked variant costs eleven. -->
+      <div class="skillrow">
+        <p class="skillkey">languages/</p>
+        <ul class="skills">
+          <li class="skill"><span data-spinner="fillsweep" aria-hidden="true">⠿</span>C/C++</li>
+          <li class="skill"><span data-spinner="orbit" aria-hidden="true">⠿</span>Java</li>
+          <li class="skill"><span data-spinner="breathe" aria-hidden="true">⠿</span>Python</li>
+          <li class="skill"><span data-spinner="snake" aria-hidden="true">⠿</span>C#</li>
+          <li class="skill"><span data-spinner="pulse" aria-hidden="true">⠿</span>SQL</li>
+          <li class="skill"><span data-spinner="cascade" aria-hidden="true">⠿</span>R</li>
+        </ul>
+      </div>
+      <div class="skillrow">
+        <p class="skillkey">tools/</p>
+        <ul class="skills">
+          <li class="skill"><span data-spinner="columns" aria-hidden="true">⠿</span>Git</li>
+          <li class="skill"><span data-spinner="scanline" aria-hidden="true">⠿</span>GitHub</li>
+          <li class="skill"><span data-spinner="checkerboard" aria-hidden="true">⠿</span>Docker</li>
+          <li class="skill"><span data-spinner="rain" aria-hidden="true">⠿</span>AWS</li>
+          <li class="skill"><span data-spinner="sparkle" aria-hidden="true">⠿</span>Jira</li>
+        </ul>
+      </div>
+      <div class="skillrow">
+        <p class="skillkey">frontend/</p>
+        <ul class="skills">
+          <li class="skill"><span data-spinner="waverows" aria-hidden="true">⠿</span>HTML</li>
+          <li class="skill"><span data-spinner="helix" aria-hidden="true">⠿</span>JavaScript</li>
+          <li class="skill"><span data-spinner="dna" aria-hidden="true">⠿</span>TypeScript</li>
+          <li class="skill"><span data-spinner="fillsweep" aria-hidden="true">⠿</span>React</li>
+          <li class="skill"><span data-spinner="checkerboard" aria-hidden="true">⠿</span>Next.js</li>
+          <li class="skill"><span data-spinner="orbit" aria-hidden="true">⠿</span>Tailwind CSS</li>
+        </ul>
+      </div>
+      <div class="skillrow">
+        <p class="skillkey">backend/</p>
+        <ul class="skills">
+          <li class="skill"><span data-spinner="breathe" aria-hidden="true">⠿</span>Node.js</li>
+          <li class="skill"><span data-spinner="snake" aria-hidden="true">⠿</span>Firebase</li>
+          <li class="skill"><span data-spinner="pulse" aria-hidden="true">⠿</span>MongoDB</li>
+          <li class="skill"><span data-spinner="cascade" aria-hidden="true">⠿</span>MySQL</li>
+        </ul>
+      </div>
 
       <p class="card-foot"><span class="k k-ok" aria-hidden="true">✓</span>21 modules loaded</p>
 

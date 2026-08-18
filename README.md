@@ -204,6 +204,26 @@ The mode is a class on `<html>`, and `?mode=tui` is a shareable link.
   The portrait keeps `role="img"` and its label; the scene is `aria-hidden`, since
   there is nothing in it a screen reader needs.
 
+## Where each fact lives
+
+The two modes share one DOM, so a summary that only makes sense in one of them is
+written once and hidden in the other. There are three such pairs, and they are a
+contract rather than a coincidence:
+
+| element | shown in | hidden in, because |
+|---|---|---|
+| `.fetch` summary card | browse | read has no card |
+| `.meta` (location + email) | read | the card states them as `based` and `email` |
+| `#about`'s `.now` list | read | the card states them as two `now` rows |
+
+`node tools/verify.mjs once` fails if any of them appears in the wrong mode. Adding
+a fourth pair means adding it to that check.
+
+The skills card's four group labels — `languages/ tools/ frontend/ backend/` — are
+the résumé's own `TECHNICAL SKILLS` headings, and the markup order matches them run
+for run (6 + 5 + 6 + 4 = the 21 the card claims). They are structure, not ornament;
+don't delete them.
+
 ## Things that will bite you
 
 - **`line-height` and the portrait's row count are coupled.** Braille dots are
