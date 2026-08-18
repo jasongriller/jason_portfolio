@@ -137,8 +137,21 @@ and picks its own pitch, 24px:
 - **Hierarchy is weight and brightness, not size** — which is ANSI's own system.
 - **One rail.** Every block uses `.wrap` and nothing else, so there is exactly one
   left edge. If you add a section, give it `.wrap`.
+- **The shell and the reading measure are separate knobs.** `--page` (68rem =
+  1088px) sizes the rail; `--measure` (80ch = 720px) caps every run of text, and
+  each text block applies it *itself*. That is what lets the shell widen without
+  the prose following — 80 characters is the terminal convention and also the
+  upper bound of the readable range, so it must not grow. A new text block that
+  forgets `max-width: var(--measure)` is invisible until you meet a 110-character
+  line; `node tools/verify.mjs measure` is the guard.
 
 ## The two display modes
+
+Motion is deliberately spread rather than pooled: one 1-character spinner per
+section heading (the command is still running), one in the mode bar, and the 15
+named spinners in the skills grid. Before that split, 21 of the 23 moving elements
+sat in a single band three screens down and `tui` had nothing moving above the
+fold at all.
 
 One DOM, two presentations. `stdout` (the default) reads as terminal output.
 `tui` keeps the same font, palette and grid but makes things read as *controls* —
@@ -182,6 +195,14 @@ The mode is a class on `<html>`, and `?mode=tui` is a shareable link.
 - **The art divisors track the column count.** `100cqi / 41.4` is 69 columns ×
   0.6em; `100cqi / 26.4` is 44. Regenerate the art at a different width and both
   numbers must move with it.
+- **The two hero blocks must share one font-size cap.** Their tracks are 69fr and
+  44fr against 69 and 44 columns, so both resolve to the *same* size and the hero
+  reads as one terminal grid instead of two images. The moment one caps and the
+  other doesn't they diverge — which is exactly what a 13px portrait cap does
+  once the rail passes ~997px. Hence 13px stacked (where the portrait is
+  full-width and would otherwise reach ~26px) and 20px side by side. The override
+  has the same specificity as the rule it beats, so it must come *after* it in
+  the file. `node tools/verify.mjs hero` measures that they stay equal.
 - **The hero stacks at 49rem**, derived from the portrait track needing ≥264px so
   its dots stay distinct. Not a round number on purpose — redo the arithmetic if
   `--page` or the hero column gap changes.
@@ -194,6 +215,11 @@ The mode is a class on `<html>`, and `?mode=tui` is a shareable link.
   it only runs when the subset failed to load: there, resolving from the next
   family is the whole point, and `0.6em` would assume metrics that by definition
   are not there.
+- **An instance's start-frame offset must be coprime with the frame count.** The
+  engine offsets instance *n* by `n*(f-1) mod f`, and `f-1` is coprime with `f`
+  for every `f`. A multiplier that shares a factor collapses instances into
+  groups — the `n*5` this used to be gave every 10-frame spinner either frame 0
+  or frame 5, so six section headings ran as two visibly synchronised sets.
 - **Spinner frames must close.** Frames are precomputed and indexed `% f`, so a
   predicate whose natural period isn't exactly `f` visibly jumps at the wrap.
   Sinusoidal ones advance phase by exactly `2π/f`. A frame must also never be

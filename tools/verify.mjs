@@ -251,15 +251,15 @@ var __label = el => {
 };
 `;
 
-const WIDTHS_RAIL = [320, 375, 414, 480, 768, 1024, 1440];
-const WIDTHS_FLOW = [300, 320, 375, 414, 480, 640, 768, 1024, 1280, 1920];
+const WIDTHS_RAIL = [320, 375, 390, 414, 430, 480, 768, 820, 1024, 1180, 1440, 1920, 2560];
+const WIDTHS_FLOW = [300, 320, 375, 390, 414, 430, 480, 640, 768, 820, 1024, 1180, 1280, 1440, 1920, 2560];
 const MODES = ['stdout', 'tui'];
 
 const checks = [];
 const check = (name, blurb, fn) => checks.push({ name, blurb, fn });
 
 /* --- one left edge ------------------------------------------------------ */
-check('rail', 'every .wrap shares one left edge, both modes, 320-1440px',
+check('rail', 'every .wrap shares one left edge, both modes, 320-2560px',
   async ({ page, origin, fail }) => {
     for (const mode of MODES) {
       for (const w of WIDTHS_RAIL) {
@@ -285,7 +285,7 @@ check('rail', 'every .wrap shares one left edge, both modes, 320-1440px',
   });
 
 /* --- nothing pushes the page sideways ----------------------------------- */
-check('overflow', 'no horizontal overflow, 300-1920px, both modes',
+check('overflow', 'no horizontal overflow, 300-2560px, both modes',
   async ({ page, origin, fail }) => {
     for (const mode of MODES) {
       for (const w of WIDTHS_FLOW) {
@@ -358,6 +358,110 @@ check('focus', 'every tab stop shows a ring with >=3:1 against its real backdrop
     }
     note(`tab stops walked - ${stops.join(', ')}`);
   });
+
+/* --- the reading measure survives a wider shell -------------------------- */
+check('measure', 'no run of text exceeds the 80ch measure, however wide the rail',
+  async ({ page, origin, fail }) => {
+    /* The whole point of widening --page is that the SHELL grows and the reading
+       measure does not. Every text block caps itself at --measure independently
+       of the rail, so a block that forgets to is invisible until you hit a
+       112-character line. */
+    for (const mode of MODES) {
+      for (const w of [1088, 1440, 1920, 2560]) {
+        await page.setWidth(w);
+        await page.goto(`${origin}/?mode=${mode}`);
+        const over = await page.eval(`${HELPERS}
+          (() => {
+            /* Measure 1ch rather than deriving it: --fs is 0.9375rem and the
+               advance is 0.6em, and getting either constant wrong silently
+               rescales every result. */
+            const probe = document.createElement('span');
+            probe.style.cssText = 'position:absolute;visibility:hidden;white-space:pre;width:100ch';
+            document.body.appendChild(probe);
+            const ch = probe.getBoundingClientRect().width / 100;
+            probe.remove();
+
+            /* Measure the INK of each rendered LINE, not the box it sits in.
+               Ranging over an element is wrong: it returns border boxes for any
+               block-level child, so a full-width <a> holding 40 characters reads
+               as 113 columns. Range each text node instead, then union the rects
+               that share a top edge -- that is one visual line. */
+            const lineWidths = el => {
+              const w = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+              const lines = new Map();
+              for (let n = w.nextNode(); n; n = w.nextNode()) {
+                if (!n.nodeValue.trim()) continue;
+                const r = document.createRange(); r.selectNodeContents(n);
+                for (const b of r.getClientRects()) {
+                  if (!b.width) continue;
+                  const key = Math.round(b.top);
+                  const cur = lines.get(key);
+                  if (cur) { cur.l = Math.min(cur.l, b.left); cur.r = Math.max(cur.r, b.right); }
+                  else lines.set(key, { l: b.left, r: b.right });
+                }
+              }
+              return [...lines.values()].map(v => v.r - v.l);
+            };
+
+            const out = [];
+            for (const el of document.querySelectorAll('p,li,dd,dt,blockquote')) {
+              if (!__vis(el)) continue;
+              const cs = getComputedStyle(el);
+              if (el.closest('.art') || cs.whiteSpace.startsWith('pre')) continue;
+              if (el.querySelector('p,li,ul,ol')) continue;      /* measure the leaf */
+              const widths = lineWidths(el);
+              const widest = widths.length ? Math.max(...widths) : 0;
+              if (widest > 80 * ch + 1) out.push({ label: __label(el), cols: Math.round(widest / ch) });
+            }
+            return out;
+          })()`);
+        for (const o of over) fail(`${mode} @${w}px: ${o.label} runs to ${o.cols} columns (max 80)`);
+      }
+    }
+  });
+
+
+/* --- the hero is one terminal grid, not two images ----------------------- */
+check('hero', 'both hero art blocks resolve to the same cell size and fill their tracks',
+  async ({ page, origin, fail }) => {
+    /* 69fr/44fr tracks against 69 and 44 columns means both blocks land on the
+       same font-size -- unless one hits its cap first, which is exactly what
+       widening --page past ~997px does to the portrait. */
+    for (const w of [784, 820, 1024, 1088, 1440, 1920, 2560]) {
+      await page.setWidth(w);
+      await page.goto(`${origin}/?mode=stdout`);
+      const h = await page.eval(`
+        (() => {
+          const name = document.querySelector('.art--name pre');
+          const port = document.querySelector('.art--port pre');
+          if (!name || !port) return null;
+          const nameTrack = name.closest('.art').getBoundingClientRect().width;
+          const portTrack = port.closest('.art').getBoundingClientRect().width;
+          const fs = el => Math.round(parseFloat(getComputedStyle(el).fontSize) * 100) / 100;
+          const ink = el => {
+            const r = document.createRange(); r.selectNodeContents(el);
+            const w = [...r.getClientRects()].map(b => b.width);
+            return w.length ? Math.round(Math.max(...w) * 10) / 10 : 0;
+          };
+          return {
+            stacked: Math.abs(nameTrack - portTrack) < 1,   /* one column: equal widths */
+            nameFs: fs(name), portFs: fs(port),
+            nameTrack: Math.round(nameTrack * 10) / 10, portTrack: Math.round(portTrack * 10) / 10,
+            nameInk: ink(name), portInk: ink(port),
+          };
+        })()`);
+      if (!h) { fail(`@${w}px: hero art missing`); continue; }
+      if (h.stacked) continue;                 /* single column: no shared grid to hold */
+      if (h.nameFs !== h.portFs) {
+        fail(`@${w}px: hero art sizes diverged - name ${h.nameFs}px vs portrait ${h.portFs}px ` +
+          `(one hit its font-size cap; in two columns they must share one)`);
+      }
+      for (const [k, ink, track] of [['name', h.nameInk, h.nameTrack], ['portrait', h.portInk, h.portTrack]]) {
+        if (ink < track - 2) fail(`@${w}px: ${k} art fills ${ink}px of a ${track}px track - ${Math.round(track - ink)}px of cap-induced dead space`);
+      }
+    }
+  });
+
 
 /* --- the 24px row grid -------------------------------------------------- */
 check('grid', 'tui controls stay on the 24px row grid when they wrap',
@@ -491,6 +595,37 @@ check('spinners', 'frames close, none blank, no two in a row identical',
       }
     }
   });
+
+/* --- spinner instances must not march in lockstep ----------------------- */
+check('stagger', 'no two instances of one spinner start on the same frame',
+  async ({ page, origin, fail, note }) => {
+    /* The engine offsets each instance's start index by n*(f-1) mod f. That is
+       coprime with f for every f, so N<=f instances of one spinner are all on
+       different frames. A multiplier that shares a factor with f collapses them
+       into groups -- n*5 with f=10 gives every instance either frame 0 or 5. */
+    for (const mode of MODES) {
+      await page.setWidth(1440);
+      await page.goto(`${origin}/?mode=${mode}`);
+      const groups = await page.eval(`${HELPERS}
+        (() => {
+          const by = {};
+          for (const el of document.querySelectorAll('[data-spinner]')) {
+            if (!__vis(el)) continue;
+            (by[el.dataset.spinner] ||= []).push(el.textContent);
+          }
+          return by;
+        })()`);
+      for (const [name, frames] of Object.entries(groups)) {
+        const distinct = new Set(frames).size;
+        const want = Math.min(frames.length, 64);
+        if (distinct < want) {
+          fail(`${mode}: ${frames.length} "${name}" instances start on only ${distinct} distinct frames`);
+        }
+      }
+      note(`${mode}: ${Object.entries(groups).map(([k, v]) => k + '\u00d7' + v.length).join(' ')}`);
+    }
+  });
+
 
 /* --- the page without JavaScript ---------------------------------------- */
 check('nojs', 'content renders and the toggle stays hidden with scripts off',

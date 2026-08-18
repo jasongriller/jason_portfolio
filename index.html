@@ -94,7 +94,9 @@
   --fs:.9375rem;   /* 15px -> 1ch = 9px everywhere */
   --row:1.5rem;    /* 24px -> the only vertical unit */
 
-  --page:56rem;
+  --page:68rem;   /* 1088px. Prose does NOT follow it: --measure caps the text
+                      blocks independently, so the shell widens and the reading
+                      measure stays at 80ch. */
   --measure:80ch;
   --gutter:clamp(1rem,4vw,2.5rem);
 }
@@ -156,6 +158,10 @@ h1,h2{font-size:inherit;font-weight:400;margin:0}
 /* ---------- the $ command heading, reused by every section ---------- */
 /* Tier A: the page's only bold. JetBrains Mono 700 is already being fetched. */
 .cmd{font-weight:700;color:var(--fg);margin:0 0 var(--row)}
+/* The command is still running. One 1-char spinner per section is what spreads
+   motion down the page -- without it every moving pixel on the page lives in the
+   skills grid, 21 of them in one band you only reach after three screens. */
+.cmd .run{margin-left:1ch;color:var(--fg-dim);font-weight:400}
 .sig{color:var(--accent)}
 
 /* ---------- log lines ---------- */
@@ -290,7 +296,10 @@ body.ready .boot li{animation:fade .28s ease-out forwards;animation-delay:calc(v
 .entry-head{display:flex;flex-wrap:wrap;gap:0 1ch;max-width:var(--measure)}
 .entry-name{color:var(--fg);font-weight:700}
 .entry-tag,.stack{color:var(--fg-dim)}
-.stack{margin:0}
+/* Capped like every other run of text. Without it this is the one line that
+   tracks the rail instead of the measure -- education's coursework list ran to
+   110 characters once --page went to 68rem. */
+.stack{margin:0;max-width:var(--measure)}
 .prose{max-width:var(--measure);margin:0 0 var(--row)}
 
 /* ---------- the skills card ---------- */
@@ -329,6 +338,19 @@ body.ready .boot li{animation:fade .28s ease-out forwards;animation-delay:calc(v
   row-gap:0;                 /* the 24px row IS the gap — reference pitch is 1 row */
   justify-content:start;     /* pack left: no dead space */
 }
+/* The two hero blocks share a cap above 49rem, and must. Their tracks are 69fr and
+   44fr against 69 and 44 columns, so both resolve to the SAME font-size -- that is
+   what makes the hero read as one terminal grid rather than two images. The moment
+   one caps and the other does not they diverge. At --page 68rem the portrait track
+   is 378px and wants 14.3px, past the 13px cap that the STACKED layout needs (it is
+   full-width there, and uncapped would reach ~26px). So: 13px stacked, the name's
+   20px side by side, where the track ratio is the real constraint.
+   This must sit AFTER the rule above -- same specificity (0,1,1), so it wins on
+   source order alone. Putting it up with the .hero media query silently loses.
+   `node tools/verify.mjs hero` measures that the two stay equal. */
+@media (min-width:49rem){
+  .art--port pre{font-size:clamp(5px,calc(100cqi / 26.4),20px)}
+}
 /* minmax(0,max-content): the growth limit is the widest item so tracks pack to
    content, and the 0 minimum means an over-constrained grid shrinks the track
    and wraps the label instead of overflowing the page. Never bare max-content.
@@ -337,6 +359,7 @@ body.ready .boot li{animation:fade .28s ease-out forwards;animation-delay:calc(v
    empty.) */
 @media (min-width:32rem){ .skills{grid-template-columns:repeat(2,minmax(0,max-content))} }
 @media (min-width:46rem){ .skills{grid-template-columns:repeat(3,minmax(0,max-content))} }
+@media (min-width:58rem){ .skills{grid-template-columns:repeat(4,minmax(0,max-content))} }
 .skill{display:flex;align-items:baseline;gap:1ch;min-width:0;color:var(--fg)}
 .skill [data-spinner]{flex:none}
 
@@ -414,7 +437,14 @@ body.ready .boot li{animation:fade .28s ease-out forwards;animation-delay:calc(v
    then pop it in when the end-of-body script runs -- a 72px shift on every
    load. No class (JS off) -> stays hidden, which is correct: a control that
    cannot work must not appear. */
-.stdout .modebar-wrap,.tui .modebar-wrap{display:block;padding-top:var(--row);text-align:right}
+/* flex, not text-align: the status spinner has to sit on the bar's centre line,
+   and an inline sibling would ride the text baseline and push the 3-row box out
+   of the grid. justify-content pins the toggle right exactly as before. */
+.stdout .modebar-wrap,.tui .modebar-wrap{
+  display:flex;align-items:center;justify-content:flex-end;gap:2ch;
+  padding-top:var(--row);
+}
+.statusdot{color:var(--fg-faint)}
 /* Explicit height (box-sizing is border-box globally) so the 1px border is
    INSIDE the 2-row box. Without it the border adds 2px and the whole page below
    lands 2px off the 24px row grid. */
@@ -506,7 +536,9 @@ body.ready .boot li{animation:fade .28s ease-out forwards;animation-delay:calc(v
 .tui .cmdindex a:hover .navlabel,.tui .cmdindex a:focus-visible .navlabel{color:var(--bg)}
 
 /* ---- section headings: swap which half is visible ---- */
-.tui .cmd>span[aria-hidden]{display:none}
+/* :not(.run) -- the spinner is aria-hidden as well, and hiding it here would
+   leave tui with no motion in any section heading. */
+.tui .cmd>span[aria-hidden]:not(.run){display:none}
 .tui .cmd .vh{
   position:static;width:auto;height:auto;margin:0;overflow:visible;
   clip-path:none;white-space:normal;
@@ -582,6 +614,10 @@ body.ready .boot li{animation:fade .28s ease-out forwards;animation-delay:calc(v
      which should be visible and labelled. A switch would imply one is an on/off
      state of the other. Hidden entirely without JS, where it cannot work. -->
 <div class="wrap modebar-wrap">
+  <!-- The only perpetual motion above the fold in tui, which hides the boot log
+       and both art blocks. It sits in chrome both modes show, at the top of the
+       page at every viewport size. Ornament: aria-hidden, --fg-faint. -->
+  <span class="statusdot" data-spinner="dna" aria-hidden="true">⠿⠿⠿⠿⠿⠿</span>
   <div class="modebar" role="group" aria-label="Display mode">
     <button type="button" class="modebtn" data-mode="stdout" aria-pressed="true">stdout</button>
     <button type="button" class="modebtn" data-mode="tui" aria-pressed="false">tui</button>
@@ -686,6 +722,7 @@ body.ready .boot li{animation:fade .28s ease-out forwards;animation-delay:calc(v
     <h2 class="cmd" id="h-about">
       <span aria-hidden="true"><span class="sig">$</span> whoami</span>
       <span class="vh">About</span>
+      <span class="run" data-spinner="braille" aria-hidden="true">⠋</span>
     </h2>
     <p class="prose">I'm a software developer building tools at the intersection of AI,
       productivity, and personal growth. Right now, I'm working on LikeMinds, an AI-powered
@@ -700,6 +737,7 @@ body.ready .boot li{animation:fade .28s ease-out forwards;animation-delay:calc(v
     <h2 class="cmd" id="h-experience">
       <span aria-hidden="true"><span class="sig">$</span> cat experience.log</span>
       <span class="vh">Experience</span>
+      <span class="run" data-spinner="braille" aria-hidden="true">⠋</span>
     </h2>
     <div class="entry">
       <div class="entry-head">
@@ -722,6 +760,7 @@ body.ready .boot li{animation:fade .28s ease-out forwards;animation-delay:calc(v
     <h2 class="cmd" id="h-projects">
       <span aria-hidden="true"><span class="sig">$</span> ls projects/</span>
       <span class="vh">Projects</span>
+      <span class="run" data-spinner="braille" aria-hidden="true">⠋</span>
     </h2>
 
     <div class="entry">
@@ -808,6 +847,7 @@ body.ready .boot li{animation:fade .28s ease-out forwards;animation-delay:calc(v
     <h2 class="cmd" id="h-education">
       <span aria-hidden="true"><span class="sig">$</span> cat education.txt</span>
       <span class="vh">Education</span>
+      <span class="run" data-spinner="braille" aria-hidden="true">⠋</span>
     </h2>
 
     <div class="entry">
@@ -834,6 +874,7 @@ body.ready .boot li{animation:fade .28s ease-out forwards;animation-delay:calc(v
     <h2 class="cmd" id="h-skills">
       <span aria-hidden="true"><span class="sig">$</span> ls skills/</span>
       <span class="vh">Skills</span>
+      <span class="run" data-spinner="braille" aria-hidden="true">⠋</span>
     </h2>
     <div class="card">
       <span class="corner tl" aria-hidden="true">⠋⠉</span>
@@ -875,6 +916,7 @@ body.ready .boot li{animation:fade .28s ease-out forwards;animation-delay:calc(v
     <h2 class="cmd" id="h-contact">
       <span aria-hidden="true"><span class="sig">$</span> cat contact</span>
       <span class="vh">Contact</span>
+      <span class="run" data-spinner="braille" aria-hidden="true">⠋</span>
     </h2>
     <ul class="contact">
       <li><span class="k2">email</span><a class="trow" href="mailto:jgriller1@gmail.com">jgriller1@gmail.com</a></li>
@@ -1119,9 +1161,11 @@ document.querySelectorAll('[data-spinner]').forEach(function(el){
     el:el, frames:def.frames, ms:ms, vis:false,
     /* stagger BOTH the frame index and the accumulator. Offsetting only the
        index collides whenever the multiplier shares a factor with the frame
-       count (n*5 % 10 gives braille instances just 0,5,0,5); offsetting acc
-       desynchronises the tick boundaries themselves. */
-    i:(n*5) % def.frames.length,
+       count -- the n*5 this used to be gave 10-frame spinners just 0,5,0,5, and
+       the six section headings landed in two visible groups. f-1 is coprime with
+       f for every f, so up to f instances of one spinner are guaranteed distinct.
+       Offsetting acc as well desynchronises the tick boundaries themselves. */
+    i:(n * (def.frames.length - 1)) % def.frames.length,
     acc:(n*37) % ms
   };
   el.textContent = inst.frames[inst.i];

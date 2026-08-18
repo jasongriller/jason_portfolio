@@ -20,7 +20,10 @@ node tools/verify.mjs focus grid # a subset while iterating
 ```
 
 Needs Node 18+ and `google-chrome`. Zero dependencies, no temp files. Every check
-in it exists because that exact defect shipped once.
+in it exists because that exact defect shipped once — including three added when
+the rail was widened to 68rem: `measure` (no line of text outruns 80 columns
+however wide the shell gets), `hero` (both ASCII blocks resolve to one cell size)
+and `stagger` (instances of one spinner do not start on the same frame).
 
 It does not cover everything. Two things still have to be done by hand:
 
