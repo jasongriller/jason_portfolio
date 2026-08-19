@@ -19,14 +19,16 @@ node tools/verify.mjs --list     # the checks and what each one catches
 node tools/verify.mjs focus grid # a subset while iterating
 ```
 
-Needs Node 18+ and `google-chrome`. Zero dependencies, no temp files. Every check
+Needs Node 18+ and a `google-chrome` on PATH — or set `CHROME` to another binary.
+Zero dependencies, and it writes nothing to the repo (it does create a throwaway
+Chrome profile under the system temp directory, removed on exit). Every check
 in it exists because that exact defect shipped once. `node tools/verify.mjs --list`
 is the current inventory and is the thing to trust — at the time of writing it is
 `rail`, `overflow`, `focus`, `measure`, `hero`, `fetch`, `grid`, `mode`, `font`,
 `spinners`, `stagger`, `once`, `nojs`. The less obvious ones: `measure` (no line of
 text outruns 80 columns however wide the shell gets), `hero` (read mode's two ASCII
 blocks resolve to one cell size), `fetch` (browse mode's scene and summary card sit
-on the same baselines, and exactly one art block is visible per mode), `stagger`
+on the same baselines, and each mode shows exactly one of the two art blocks), `stagger`
 (instances of one spinner do not start on the same frame) and `once` (each mode
 hides the summary the other mode restates).
 
@@ -81,14 +83,17 @@ says.
 **The PDF is also the source for *structure*, not only for facts.** Its
 `TECHNICAL SKILLS` block is four labelled groups — Languages / Tools / Frontend /
 Backend — and the skills card reproduces them, in that order, because that grouping
-is a claim about what he does. Those labels were once deleted as decoration; they
+is a claim about what he does. One deliberate difference: the PDF lists AWS under
+both Tools and Backend, and the page keeps only the first, so the groups are
+6/5/6/**4** against the PDF's 6/5/6/5. That is what makes the total 21, which three
+other places assert — restore the duplicate and you break all of them. Those labels were once deleted as decoration; they
 are not. Same for `EDUCATION`'s `Relevant Coursework` and `Extracurriculars`, which
 the page renders as `coursework/` and `activities/`.
 
 ## Regenerating the three embedded blobs
 
-Both have a script, both scripts default to exactly what is committed, and both
-write to the gitignored `tools/out/`:
+Each has a script, each script defaults to exactly what is committed, and each
+writes to the gitignored `tools/out/`:
 
 ```sh
 python3 -m venv tools/.venv && tools/.venv/bin/pip install fonttools brotli pillow
@@ -126,14 +131,22 @@ it is not just the `toilet` command.
   was fourteen rows once and an audit found **zero** of them unique — 79% of its
   characters repeated text further down the page — while LikeMinds and homelab were
   each stated four times in browse mode, twice inside `#about` alone. It is five
-  rows now, and nothing in it can be read one scroll later.
+  rows now. The remaining five are all restated below the fold, and that is fine
+  and deliberate: a summary should point at detail. What is not fine is a *second
+  full statement* — the card says `now  LikeMinds — AI goal and meetup app` where
+  `#projects` gives the entry, the tag and the description.
 - **Don't add an unscoped CSS rule that touches pre-existing markup.** New rules
   for tui must be `.tui`-prefixed unless every selector targets markup that did
   not exist before. That is what keeps "if stdout changed, something leaked" a
   usable review test.
-- **Don't gate anything visible on a JS callback.** CSS owns the reveal; JS owns
-  only the typewriter and the toggle. A failure in the script must never be able
-  to leave a blank page.
+- **Don't gate anything visible on a JS callback.** A failure in the script must
+  never be able to leave a blank page. Be precise about what this does and does not
+  claim: JS owns the typewriter, the toggle, the whole spinner engine, the font
+  backstop, and — unavoidably — the boot log, whose `li`s start at `opacity: 0` and
+  are revealed only by `.ready` or `.no-js`. That last one is why `.ready` is added
+  *before* `.no-js` is removed; the other order left a window where a throw blanked
+  the boot log permanently, and `verify.mjs nojs` could not see it because with
+  scripts disabled neither line runs.
 
 ## Known unfinished
 

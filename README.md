@@ -7,7 +7,7 @@ framework and no build step: what is in the repo is what the browser gets.
 ```
 index.html    the entire site (~83 KB, ~31 KB over the wire)
 assets/       the resume PDF
-tools/        authoring scripts, the headshot they read, and the verifier
+tools/        authoring scripts, the headshot make-portrait.py reads, the verifier
               (tools/out/ is generated and gitignored)
 README.md     this file
 CLAUDE.md     notes for working in the repo
@@ -30,7 +30,8 @@ node tools/verify.mjs grid     # just one
 ```
 
 It needs Node 18+ and `google-chrome` on PATH, and nothing else — it starts its
-own static server and headless browser and writes no files. Every check in it
+own static server and headless browser, and writes nothing to the repo — its only
+output is a throwaway Chrome profile under the system temp directory. Every check in it
 corresponds to a bug this page has actually had. It is a regression harness, not
 a proof of correctness; still look at the page.
 
@@ -94,9 +95,9 @@ immune — see below.
 JetBrains Mono contains **no braille** (U+2800–28FF) and **no block elements**
 (U+2580–259F) — not in any build, including the Nerd Font patched ones
 ([JetBrainsMono#630](https://github.com/JetBrains/JetBrainsMono/issues/630)) —
-and Google Fonts serves neither. The spinners, the portrait, the ASCII name, the
-corner ornaments, the block cursor and every log marker are made of glyphs it
-does not have.
+and Google Fonts serves neither. The spinners, the portrait, the workspace scene,
+the ASCII name, the corner ornaments, the block cursor and every log marker are
+made of glyphs it does not have.
 
 Without the subset the browser picks a per-glyph fallback at a different advance
 width — DejaVu Sans is +22%, Noto Sans Mono CJK is +100% — which shears the
@@ -112,7 +113,7 @@ U+2192        → log prefix
 U+2500-259F   box drawing + block elements: rules, name art, block cursor
 U+25B2        ▲ warn prefix (Adwaita has no U+26A0)
 U+2713        ✓ log prefix
-U+2800-28FF   braille: spinners, portrait, corner ornaments
+U+2800-28FF   braille: spinners, portrait, workspace scene, corner ornaments
 ```
 
 Its advance is 600/1000em, identical to JetBrains Mono, so no `size-adjust` is
@@ -139,8 +140,10 @@ and picks its own pitch, 24px:
 - **There is one text size.** `--fs` is the only font-size any text uses, which
   makes `1ch` the same 9px page-wide, so the 2ch log indent, the 6ch spinner box,
   the 2ch card padding and the 22ch nav column all land on one character grid.
-  The other `font-size` declarations in the file are on the two art `<pre>`
-  blocks, where size is a function of container width rather than of hierarchy.
+  The other `font-size` declarations are on the three art `<pre>` blocks, where
+  size is never about hierarchy: the name art and the portrait derive theirs from
+  container width (`100cqi / divisor`), and the scene uses three fixed values
+  chosen so its 15 rows land on the 24px grid.
 - **Hierarchy is weight and brightness, not size** — which is ANSI's own system.
 - **One rail.** Every block uses `.wrap` and nothing else, so there is exactly one
   left edge. If you add a section, give it `.wrap`.
@@ -154,11 +157,14 @@ and picks its own pitch, 24px:
 
 ## Motion
 
-Deliberately spread rather than pooled: one 1-character spinner per section heading
-(the command is still running), one in the mode bar, and the 15 named spinners in
-the skills grid — 33 instances of 15 definitions. Before that split, 21 of the 23
-moving elements sat in a single band three screens down and browse mode had nothing
-moving above the fold at all.
+Deliberately spread rather than pooled. There are **15 spinner definitions and 28
+instances**: 21 in the skills grid (14 of the definitions, one per skill), 6 on the
+section headings (all `braille`, meaning "the command is still running"), and 1 in
+the mode bar. Before that split, 21 of the 23 moving elements sat in a single band
+three screens down and browse mode had nothing moving above the fold at all.
+
+Count instances with `grep -o 'data-spinner=' index.html | wc -l` — `grep -c`
+counts *lines* and includes five CSS and JS mentions.
 
 ## The two display modes
 
@@ -204,7 +210,8 @@ The mode is a class on `<html>`, and `?mode=tui` is a shareable link.
 - **The two modes show different art, and exactly one block at a time.** Read mode
   shows the braille portrait; browse mode hides it and shows `.art--scene`, an
   isometric workspace drawing, in the same track. They swap — neither is ever a
-  copy of the other, and `verify.mjs fetch` fails if both or neither is visible.
+  copy of the other. `verify.mjs fetch` loads both modes and fails if the wrong
+  block is visible in either; it only tested browse until the claim was audited.
   The portrait keeps `role="img"` and its label; the scene is `aria-hidden`, since
   there is nothing in it a screen reader needs.
 
@@ -236,9 +243,13 @@ don't delete them.
 - **The name art needs `line-height: 1`.** Block glyphs are taller than 1em, so
   at 1 they butt cleanly against the row below. If seams appear, go *down*
   toward .95 — never up, or a hairline runs through the letters.
-- **The art divisors track the column count.** `100cqi / 41.4` is 69 columns ×
-  0.6em; `100cqi / 26.4` is 44. Regenerate the art at a different width and both
-  numbers must move with it.
+- **The art divisors track the column count — except the scene, which has none.**
+  `100cqi / 41.4` is 69 columns × 0.6em for the name art; `100cqi / 26.4` is 44 for
+  the portrait. Regenerate either and its divisor moves with it. The scene is not
+  container-sized, so its 36 columns are hardcoded in **four** places with nothing
+  to flag them: `make-scene.py`'s `--cols`, the three fixed `font-size` values, and
+  a bare `calc(36 * 0.6 * 20px)` in the browse-mode hero track. `verify.mjs fetch`
+  catches a wrong row count but **not** a wrong track width.
 - **The two hero blocks must share one font-size cap.** Their tracks are 69fr and
   44fr against 69 and 44 columns, so both resolve to the *same* size and the hero
   reads as one terminal grid instead of two images. The moment one caps and the
@@ -255,10 +266,13 @@ don't delete them.
 - **Don't use `ch` on anything in `--font-art`.** `ch` is the advance of `0` in
   the first available font, and that is `Terminal Glyphs`, which has no digits —
   a case the spec resolves as 0.5em. Use `0.6em`, the subset's real advance.
-  The one exception is `probeGlyphs()`, which measures `1ch` precisely *because*
-  it only runs when the subset failed to load: there, resolving from the next
-  family is the whole point, and `0.6em` would assume metrics that by definition
-  are not there.
+  The one exception is `probeGlyphs()`, which *assigns* `width: 1ch` to the
+  spinners on its fallback path. Note what it does not do: it never **measures**
+  `1ch` — it compares `measureText('⠿')` against `measureText('▌')`, two glyphs
+  both inside the subset — and it runs on **every** load, returning early when the
+  subset is fine. Only the width assignment is conditional, and there `ch`
+  resolving from the next family is exactly the point, since the subset's metrics
+  are by definition absent.
 - **An instance's start-frame offset must be coprime with the frame count.** The
   engine offsets instance *n* by `n*(f-1) mod f`, and `f-1` is coprime with `f`
   for every `f`. A multiplier that shares a factor collapses instances into
@@ -280,12 +294,13 @@ don't delete them.
   paint in.** The default ring is `--accent`; inside an element whose background
   has flipped to `--accent` it is 1.00:1 and invisible. Checking that the element
   has a non-zero box is not the same check.
-- **Art font-sizes are constrained by the row grid.** A block of `R` cells is
-  `R × 1.2 × size` tall, and that has to be a whole number of 24px rows — so the
-  size ladder depends on the row count. The scene is 15 rows, so its sizes are
-  multiples of **4/3** (20, 13.333, 9.333); the portrait is 25 rows, so multiples
-  of **0.8**. That is what lets the summary card sit on the same baselines as the
-  art beside it. Rows align this way; **columns do not** — the art cell is 12px
+- **A fixed-size art block's font-size is constrained by the row grid.** A block
+  of `R` cells is `R × 1.2 × size` tall, and that has to be a whole number of 24px
+  rows. Only the scene is sized this way: 15 rows, so multiples of **4/3** (20,
+  13.333, 9.333), which is what lets the summary card beside it sit on the same
+  baselines. The portrait and the name art are container-query sized instead, so
+  they have no ladder — the portrait's old multiples-of-0.8 ladder went away when
+  the scene took over the browse-mode slot. Rows align this way; **columns do not** — the art cell is 12px
   wide and `1ch` is 9px — so the grid track is sized in px, never `ch`.
 - **Braille dots render small relative to their spacing.** The scene was first
   drawn at the portrait's 44 columns, was geometrically perfect, and read as a

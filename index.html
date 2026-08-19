@@ -574,14 +574,17 @@ body.ready .boot li{animation:fade .28s ease-out forwards;animation-delay:calc(v
    and below 24.5rem stop reserving a key column at all and stack the pair. */
 .tui .fetch dd{margin:0;color:var(--fg);overflow-wrap:anywhere}
 
-/* The portrait, re-placed into the left track. `order`, not a second copy: the
-   spinner engine scans [data-spinner] exactly once at load, so cloned markup
-   goes inert, and this element also carries the role="img" and aria-label that
-   make it legible to a screen reader.
+/* The workspace scene, placed into the left track. `order`, not a second copy: the
+   spinner engine scans [data-spinner] exactly once at load, so cloned markup goes
+   inert. (Read mode shows the portrait in this slot instead; that element is the
+   one carrying role="img" and an aria-label, while the scene is decorative.)
 
-   Why this is free on the grid: the block is 44 x 25 cells, and at 20px its
-   line-height of 1.2 is exactly 24px = --row. So it is exactly 25 page rows and
-   its lines land on the same baselines as the table beside it.
+   Why this is free on the grid: the block is 36 x 15 cells, and 15 rows at
+   line-height 1.2 is a whole number of 24px rows whenever the size is a multiple
+   of 4/3 -- so its lines land on the same baselines as the table beside it.
+   The bare 36 below is the scene's column count and there is no divisor here to
+   flag it, unlike the cqi blocks: regenerate the scene at another width and this
+   literal, make-scene.py's --cols, and the three font-sizes must all move.
    ROWS align; COLUMNS do not -- the portrait cell is 12px wide and 1ch is 9px --
    so the track is sized in px. Using ch here would be the same mistake the
    --font-art rule already warns about, one level up. */
@@ -761,8 +764,8 @@ body.ready .boot li{animation:fade .28s ease-out forwards;animation-delay:calc(v
      which should be visible and labelled. A switch would imply one is an on/off
      state of the other. Hidden entirely without JS, where it cannot work. -->
 <div class="wrap modebar-wrap">
-  <!-- The only perpetual motion above the fold in tui, which hides the boot log
-       and both art blocks. It sits in chrome both modes show, at the top of the
+  <!-- The only perpetual motion above the fold in browse mode, which hides the
+       boot log, the name art and the portrait. It sits in chrome both modes show, at the top of the
        page at every viewport size. Ornament: aria-hidden, --fg-faint. -->
   <span class="statusdot" data-spinner="dna" aria-hidden="true">⠿⠿⠿⠿⠿⠿</span>
   <!-- The labels are plain English on purpose. "stdout" and "tui" are both jargon,
@@ -1153,7 +1156,6 @@ body.ready .boot li{animation:fade .28s ease-out forwards;animation-delay:calc(v
 <script>
 (function(){
 'use strict';
-document.body.classList.remove('no-js');
 
 /* ---- display mode ----
    The class itself was already set before first paint by the head script; this
@@ -1202,8 +1204,16 @@ document.body.classList.remove('no-js');
    leave a blank page, and no failsafe timeout is needed to rescue one.
    Previously this class was added after the typewriter completed, so the page
    sat blank for ~1.3s (2.5s if anything threw) and every screenshot tool and
-   preview crawler captured an empty document. */
+   preview crawler captured an empty document.
+
+   These two run together, and .no-js is dropped only once .ready is on. Removing
+   .no-js earlier -- as this did -- opened a window: .boot li starts at opacity:0
+   and only .no-js or .ready makes it visible, so anything throwing in the mode
+   IIFE above left the boot log permanently blank, on a page whose whole point is
+   that no script failure can blank it. `verify.mjs nojs` never caught it, because
+   with scripts fully disabled neither line runs and .no-js survives. */
 document.body.classList.add('ready');
+document.body.classList.remove('no-js');
 
 /* ===========================================================================
    Braille spinner engine.

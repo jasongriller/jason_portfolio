@@ -11,7 +11,8 @@
  * Zero dependencies. It needs Node 18+ (for the global WebSocket, which is what
  * lets it speak the Chrome DevTools Protocol without an npm package) and a
  * `google-chrome` on PATH. It starts its own static server and its own headless
- * browser, and writes no files anywhere.
+ * browser, and writes nothing to the repo -- its only output is a throwaway
+ * Chrome profile under the system temp directory, removed on exit.
  *
  *   node tools/verify.mjs            run everything
  *   node tools/verify.mjs rail grid  run only the named checks
@@ -473,6 +474,21 @@ check('fetch', 'the scene and the summary card line up, and only one art block s
        the portrait in read, the scene in browse, never both and never neither. */
     for (const w of [390, 820, 896, 1088, 1440, 1920]) {
       await page.setWidth(w);
+      /* Read mode first: the claim is "exactly one art block per mode", and this
+         check used to load browse only, so read mode's half went unverified. */
+      await page.goto(`${origin}/?mode=stdout`);
+      const r = await page.eval(`${HELPERS}
+        (() => {
+          const port = document.querySelector('.art--port');
+          const scene = document.querySelector('.art--scene');
+          if (!port || !scene) return null;
+          return { portShown: __vis(port), sceneShown: __vis(scene) };
+        })()`);
+      if (!r) fail(`@${w}px: an art block is missing from the markup`);
+      else {
+        if (!r.portShown) fail(`@${w}px: read mode is hiding the portrait`);
+        if (r.sceneShown) fail(`@${w}px: the scene is showing in read mode - the blocks must swap`);
+      }
       await page.goto(`${origin}/?mode=tui`);
       const f = await page.eval(`${HELPERS}
         (() => {
