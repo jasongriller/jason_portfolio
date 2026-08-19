@@ -90,6 +90,18 @@ other places assert — restore the duplicate and you break all of them. Those l
 are not. Same for `EDUCATION`'s `Relevant Coursework` and `Extracurriculars`, which
 the page renders as `coursework/` and `activities/`.
 
+## The worklog
+
+`WORKLOG.md` at the root is private: gitignored, never committed, never
+published. It is the raw-capture tier of the update pipeline — worklog → resume
+PDF → page — and it is **not** a source for page content; the provenance rule
+above stands unchanged.
+
+When picking up work, read its `now / open threads`. Append dated one-liners
+for session outcomes and for any life news the user mentions, and when a life
+event lands, walk its `when life changes` checklist. Messy entries are fine;
+the bar is one line, not prose.
+
 ## Regenerating the three embedded blobs
 
 Each has a script, each script defaults to exactly what is committed, and each
